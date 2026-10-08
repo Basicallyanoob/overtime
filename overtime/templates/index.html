@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "macros.html" import delta, tile, player_link %}
+{% block main %}
+<section class="intro">
+  <h1>Leaderboard</h1>
+  <p class="lede">{{ summary.maps }} maps over {{ summary.nights }} club night{{ '' if summary.nights == 1 else 's' }}, {{ summary.players }} players, {{ summary.hours|num(1) }} hours of play. Ratings update after every finished map; you need {{ club.min_maps }} maps in a role to be ranked in it.</p>
+  {% if unknown_heroes %}<p class="notice">Heroes missing from config/heroes.yaml: {{ unknown_heroes|join(", ") }}. Add them so their maps count towards role ratings.</p>{% endif %}
+</section>
+
+<section class="boards" aria-label="Leaderboards by role">
+  {% for b in boards %}
+  <input type="radio" name="board" id="board-{{ b.role or 'overall' }}" class="board-toggle"{% if loop.first %} checked{% endif %}>
+  {% endfor %}
+  <div class="segmented" role="group" aria-label="Role">
+    {% for b in boards %}<label for="board-{{ b.role or 'overall' }}">{{ b.label }}</label>{% endfor %}
+  </div>
+  {% for b in boards %}
+  <div class="board board-{{ b.role or 'overall' }}">
+    {% if b.rows %}
+    <div class="scroll">
+    <table class="ladder">
+      <caption class="sr">{{ b.label }} leaderboard</caption>
+      <thead><tr>
+        <th scope="col" class="num">#</th><th scope="col">Player</th><th scope="col" class="num">Rating</th>
+        {% if not b.role %}<th scope="col" class="num" title="Rating change over the most recent club night">Latest night</th>{% endif %}
+        <th scope="col" class="num">Maps</th><th scope="col" class="num">W–L</th><th scope="col" class="num">Win rate</th>
+        <th scope="col" class="num opt">Elims /10</th><th scope="col" class="num opt">Deaths /10</th>
+        <th scope="col" class="num opt">Damage /10</th><th scope="col" class="num opt">Healing /10</th>
+        <th scope="col" class="opt">Most played</th>
+      </tr></thead>
+      <tbody>
+      {% for r in b.rows %}
+      <tr>
+        <td class="num rank">{{ loop.index }}</td>
+        <td class="name">{{ player_link(r.player, root) }}</td>
+        <td class="num rating">{{ r.rating|num }}</td>
+        {% if not b.role %}<td class="num">{{ delta(r.change) }}</td>{% endif %}
+        <td class="num">{{ r.maps }}</td><td class="num">{{ r.record }}</td><td class="num">{{ r.winrate|pct }}</td>
+        <td class="num opt">{{ r.per10.eliminations|num(1) }}</td><td class="num opt">{{ r.per10.deaths|num(1) }}</td>
+        <td class="num opt">{{ r.per10.hero_damage|num }}</td><td class="num opt">{{ r.per10.healing|num }}</td>
+        <td class="opt heroes">{{ r.heroes|join(", ") }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="empty">Nobody has played {{ club.min_maps }} {{ b.label|lower }} maps yet.</p>
+    {% endif %}
+    {% if b.unranked %}
+    <p class="unranked">Not ranked yet, fewer than {{ club.min_maps }} maps:
+      {% for r in b.unranked %}{{ player_link(r.player, root) }} ({{ r.maps }}){{ ", " if not loop.last }}{% endfor %}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+
+<section>
+  <h2>Latest maps</h2>
+  <div class="tiles">{% for v in recent %}{{ tile(v, root) }}{% endfor %}</div>
+  <p><a href="{{ root }}matches/index.html">All {{ summary.maps }} maps</a></p>
+</section>
+
+{% if warnings %}
+<details class="warnings"><summary>{{ warnings|length }} log file{{ '' if warnings|length == 1 else 's' }} needed attention</summary>
+<ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul></details>
+{% endif %}
+{% endblock %}

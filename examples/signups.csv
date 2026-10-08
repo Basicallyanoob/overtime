@@ -1,0 +1,13 @@
+player,roles
+# One row per player. Roles in order of preference, separated by > or commas.
+# Use tank, damage (or dps) and support, or 'any'.
+Kestrel,damage
+Marrow,tank
+Lumen,support
+Quill,damage>support
+Pike,any
+Rook,tank
+Vesper,dps
+Halcyon,damage/support
+Tidal,support
+Juniper,support>tank

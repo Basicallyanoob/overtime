@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}How it works, {{ club.name }}{% endblock %}
+{% block main %}
+<article class="prose">
+<h1>How it works</h1>
+<p>Every stat on this site comes from the log file that a Workshop mode called ScrimTime writes during a custom game. The lobby host saves one file per map, an officer adds it to the club's repository, and the site rebuilds itself.</p>
+
+<h2>Ratings</h2>
+<p>Each player has an overall rating and one for each role they have played. After every finished map the winners' ratings go up and the losers' go down, by more when the result was a surprise. The model is Plackett-Luce from the openskill library, a close relative of the TrueSkill system used in matchmaking.</p>
+<p>The model keeps two numbers per player: its best estimate of their skill, shown here on a scale where everyone starts at 1,000, and how unsure it is. Team results reveal little about any one player, so early ratings swing a lot; that is why you need {{ club.min_maps }} maps before you appear on a ladder. Your role rating only moves on maps where you spent most of your time on a hero of that role.</p>
+<p>Only the map result counts. Eliminations, damage and healing are shown but never feed the rating, because a support who keeps their team alive can have quiet numbers on a winning map.</p>
+
+<h2>Team builder</h2>
+<p>The <a href="builder.html">team builder</a> takes ten players and the roles each will play, then checks every legal 1-2-2 split and shows the three most even. It uses each player's rating for the role they are put in, and charges a small cost for every step below someone's first-choice role.</p>
+
+<h2>Unfinished and missing maps</h2>
+<p>A log that stops before the end of the match still appears in the match list, marked unfinished, but does not change anyone's rating. Heroes released after this site was set up need adding to <code>config/heroes.yaml</code> before their maps count towards a role.</p>
+</article>
+{% endblock %}

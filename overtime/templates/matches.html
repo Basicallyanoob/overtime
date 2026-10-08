@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "macros.html" import tile %}
+{% block title %}Matches, {{ club.name }}{% endblock %}
+{% block main %}
+<section class="intro"><h1>Matches</h1>
+<p class="lede">Every map from every club night, newest first. Team 1 is blue, team 2 is red.</p></section>
+{% for night, views in nights.items() %}
+<section>
+  <h2>{{ night|day }}</h2>
+  <div class="tiles">{% for v in views %}{{ tile(v, root) }}{% endfor %}</div>
+</section>
+{% endfor %}
+{% endblock %}

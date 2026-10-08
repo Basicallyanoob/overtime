@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "macros.html" import player_link %}
+{% block title %}Heroes, {{ club.name }}{% endblock %}
+{% block main %}
+<section class="intro"><h1>Heroes</h1>
+<p class="lede">Share of all time played, and how often a team won when the hero was a player's main pick for the map. Inhouse teams are random, so win rates on a handful of maps say more about who played the hero than about the hero.</p></section>
+{% for role, rows in roles.items() %}
+<section>
+  <h2>{{ ROLE_LABEL.get(role, "Not in heroes.yaml") }}</h2>
+  <div class="scroll">
+  <table class="hero-table">
+    <thead><tr><th scope="col">Hero</th><th scope="col">Share of play time</th><th scope="col" class="num">Maps as main</th><th scope="col" class="num">Win rate</th><th scope="col" class="opt">Played most by</th></tr></thead>
+    <tbody>
+    {% for h in rows %}
+    <tr>
+      <td class="name">{{ h.hero }}</td>
+      <td class="share"><span class="bar" style="--w: {{ (h.share / rows[0].share * 100)|round(1) }}%"></span><span>{{ (h.share * 100)|num(1) }}%</span></td>
+      <td class="num">{{ h.maps }}</td>
+      <td class="num">{{ h.winrate|pct if h.rated >= 3 else "–" }}</td>
+      <td class="opt">{{ player_link(h.top, root) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

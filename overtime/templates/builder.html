@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Team builder, {{ club.name }}{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>Team builder</h1>
+  <p class="lede">Tick the ten players in tonight's lobby. Each starts with the roles they usually play, in order of preference; select a role to add or remove it, and the order you select them in becomes the order of preference.</p>
+</section>
+<div class="builder">
+  <section class="picker" aria-label="Players">
+    <label class="search"><span class="sr">Find a player</span><input type="search" id="find" placeholder="Find a player" autocomplete="off"></label>
+    <ul id="players" class="pick-list"></ul>
+  </section>
+  <section class="result" aria-live="polite">
+    <p id="status" class="status">Pick 10 players.</p>
+    <button id="make" type="button" disabled>Make teams</button>
+    <div id="options"></div>
+  </section>
+</div>
+<script id="data" type="application/json">{{ data|safe }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ root }}builder.js"></script>{% endblock %}

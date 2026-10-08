@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "macros.html" import delta, player_link %}
+{% set p = v.p %}
+{% block title %}{{ p.name }}, {{ club.name }}{% endblock %}
+{% block main %}
+<section class="profile-head">
+  <h1>{{ p.name }}</h1>
+  {% set others = p.ingame_names|reject("equalto", p.name)|list %}
+  {% if others %}<p class="aka">Also plays as {{ others|sort|join(", ") }}</p>{% endif %}
+  <dl class="figures">
+    <div><dt>Rating</dt><dd>{{ v.rating|num if v.rating is not none else "Unrated" }}</dd></div>
+    <div><dt>Record</dt><dd>{{ v.record }}</dd></div>
+    <div><dt>Win rate</dt><dd>{{ v.winrate|pct }}</dd></div>
+    {% for r in v.roles %}<div><dt>{{ ROLE_LABEL[r.role] }} rating</dt><dd>{{ r.rating|num }}<span class="sub">{{ r.maps }} maps</span></dd></div>{% endfor %}
+  </dl>
+</section>
+
+{% if v.chart %}
+{% set c = v.chart %}
+<section>
+  <h2>Rating after each map</h2>
+  <figure class="chart">
+    <svg viewBox="0 0 {{ c.w }} {{ c.h }}" role="img" aria-label="Rating went from {{ c.pts[0].v }} after the first map to {{ c.pts[-1].v }} after the latest">
+      {% for g in c.grid %}
+      <line class="grid{% if g.v == 1000 %} base{% endif %}" x1="{{ c.x0 }}" x2="{{ c.x1 }}" y1="{{ g.y }}" y2="{{ g.y }}"/>
+      <text class="axis" x="{{ c.x0 - 8 }}" y="{{ g.y + 4 }}" text-anchor="end">{{ g.v|num }}</text>
+      {% endfor %}
+      <polyline class="line" points="{{ c.line }}"/>
+      {% for pt in c.pts %}
+      <a href="{{ root }}matches/{{ pt.id }}.html">
+        <circle class="hit" cx="{{ pt.x }}" cy="{{ pt.y }}" r="10"><title>{{ pt.label }}: {{ pt.v|num }}</title></circle>
+        <circle class="dot{% if loop.last %} last{% endif %}" cx="{{ pt.x }}" cy="{{ pt.y }}" r="{{ 4.5 if loop.last else 3 }}"/>
+      </a>
+      {% endfor %}
+      <text class="axis" x="{{ c.x0 }}" y="{{ c.h - 6 }}">{{ c.first }}</text>
+      <text class="axis" x="{{ c.x1 }}" y="{{ c.h - 6 }}" text-anchor="end">{{ c.last }}</text>
+    </svg>
+    <figcaption>Each point is a finished map; select one to open its scoreboard. Everyone starts at 1,000, the rating of an average player.</figcaption>
+  </figure>
+</section>
+{% endif %}
+
+<section>
+  <h2>Heroes</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th scope="col">Hero</th><th scope="col">Role</th><th scope="col" class="num">Time</th><th scope="col" class="num">Maps</th><th scope="col" class="num">Win rate</th><th scope="col" class="num">Elims /10</th><th scope="col" class="num">Deaths /10</th><th scope="col" class="num opt">Damage /10</th><th scope="col" class="num opt">Healing /10</th></tr></thead>
+    <tbody>
+    {% for h in v.heroes %}
+    <tr><td class="name">{{ h.hero }}</td><td>{{ ROLE_LABEL.get(h.role, "Unknown") }}</td><td class="num">{{ (h.time / 60)|num }} min</td><td class="num">{{ h.maps }}</td>
+      <td class="num">{{ h.winrate|pct if h.winrate is not none else "–" }}</td>
+      <td class="num">{{ h.per10.eliminations|num(1) }}</td><td class="num">{{ h.per10.deaths|num(1) }}</td>
+      <td class="num opt">{{ h.per10.hero_damage|num }}</td><td class="num opt">{{ h.per10.healing|num }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+{% if v.best_mates %}
+<section>
+  <h2>Best teammates</h2>
+  <p class="lede">Win rate on the same team, from players you have teamed with at least three times.</p>
+  <ul class="mates">
+    {% for m in v.best_mates %}<li>{{ player_link(m.player, root) }} <span>{{ m.wins }} of {{ m.games }} won, {{ m.winrate|pct }}</span></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section>
+  <h2>Maps played</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th scope="col">Date</th><th scope="col">Map</th><th scope="col">Result</th><th scope="col">Hero</th><th scope="col" class="num">Elims</th><th scope="col" class="num">Deaths</th><th scope="col" class="num">Rating</th></tr></thead>
+    <tbody>
+    {% for r in v.recent %}
+    <tr>
+      <td>{{ r.a.map.played_at.strftime("%-d %b") }}</td>
+      <td><a href="{{ root }}matches/{{ r.a.map.id }}.html">{{ r.a.map.map_name }}</a></td>
+      <td><span class="result {{ r.a.result }}">{{ r.a.result|capitalize }}</span></td>
+      <td>{{ r.a.hero }}</td>
+      <td class="num">{{ r.a.totals.eliminations|num }}</td><td class="num">{{ r.a.totals.deaths|num }}</td>
+      <td class="num">{{ delta(r.delta) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

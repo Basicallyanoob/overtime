@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "overtime"
+version = "0.1.0"
+description = "Stats, ratings and team balancing for Overwatch club inhouses, from Workshop logs"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["jinja2>=3.1", "pyyaml>=6", "openskill>=6,<7"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+overtime = "overtime.cli:main"
+
+[tool.setuptools]
+packages = ["overtime"]
+
+[tool.setuptools.package-data]
+overtime = ["templates/*.html", "static/*", "static/fonts/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

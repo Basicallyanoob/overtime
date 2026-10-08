@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "macros.html" import delta, player_link %}
+{% set m = v.map %}
+{% block title %}{{ m.map_name }}, {{ m.played_at|day }}{% endblock %}
+{% block main %}
+<section class="match-head">
+  <p class="crumb"><a href="{{ root }}matches/index.html">Matches</a> / {{ m.played_at|day }}, {{ m.played_at|clock }}</p>
+  <h1>{{ m.map_name }}</h1>
+  <div class="scoreline" aria-label="Final score">
+    <div class="side t1{% if v.teams[0].won %} won{% endif %}"><span class="team">{{ m.team_names[0] }}</span><span class="score">{{ m.score[0] }}</span></div>
+    <div class="side t2{% if v.teams[1].won %} won{% endif %}"><span class="score">{{ m.score[1] }}</span><span class="team">{{ m.team_names[1] }}</span></div>
+  </div>
+  <p class="lede">
+    {{ m.map_type }}, {{ m.duration|mmss }} of match time.
+    {% if not m.complete %}This log stops before the end of the match, so it is not rated.
+    {% elif m.winner == 0 %}A draw.
+    {% else %}{{ m.team_names[m.winner - 1] }} won.{% endif %}
+    {% if v.prediction is not none %}
+    Before the map the ratings gave {{ m.team_names[0] }} a {{ v.prediction|pct }} chance{% if v.upset %}, so this was an upset{% endif %}.
+    {% endif %}
+  </p>
+</section>
+{% for t in v.teams %}
+<section class="team-block t{{ t.no }}">
+  <h2>{{ t.name }}{% if t.won %}, winners{% endif %}</h2>
+  <div class="scroll">
+  <table>
+    <caption class="sr">{{ t.name }} scoreboard</caption>
+    <thead><tr><th scope="col">Player</th><th scope="col">Heroes</th><th scope="col" class="num">Elims</th><th scope="col" class="num">Final blows</th><th scope="col" class="num">Deaths</th><th scope="col" class="num">Damage</th><th scope="col" class="num">Healing</th><th scope="col" class="num opt">Blocked</th><th scope="col" class="num">Rating</th></tr></thead>
+    <tbody>
+    {% for r in t.rows %}
+    <tr>
+      <td class="name">{{ player_link(r.player, root) }}{% if r.ingame != r.player.name %}<span class="alias">as {{ r.ingame }}</span>{% endif %}</td>
+      <td>{{ r.heroes|join(", ") }}</td>
+      <td class="num">{{ r.stats.eliminations|num }}</td><td class="num">{{ r.stats.final_blows|num }}</td><td class="num">{{ r.stats.deaths|num }}</td>
+      <td class="num">{{ r.stats.hero_damage|num }}</td><td class="num">{{ r.stats.healing|num }}</td><td class="num opt">{{ r.stats.damage_blocked|num }}</td>
+      <td class="num">{{ delta(r.delta) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

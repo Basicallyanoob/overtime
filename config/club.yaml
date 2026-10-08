@@ -1,0 +1,7 @@
+# Shown in the site header and page titles.
+name: Demo University Esports
+season: Michaelmas 2026
+# Players need this many rated maps to appear on the ranked leaderboard.
+min_maps: 5
+# Link in the footer to this project's GitHub repository (optional).
+repo: ""

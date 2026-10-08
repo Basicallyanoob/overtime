@@ -1,0 +1,59 @@
+# Hero -> role, spelled exactly as the game writes it in Workshop logs.
+# When a new hero is released, add a line here; unknown heroes are reported
+# by `overtime build` and their maps count towards the overall rating only.
+tank:
+  - D.Mon
+  - D.Va
+  - Domina
+  - Doomfist
+  - Hazard
+  - Junker Queen
+  - Mauga
+  - Orisa
+  - Ramattra
+  - Reinhardt
+  - Roadhog
+  - Sigma
+  - Winston
+  - Wrecking Ball
+  - Zarya
+damage:
+  - Anran
+  - Ashe
+  - Bastion
+  - Cassidy
+  - Echo
+  - Emre
+  - Freja
+  - Genji
+  - Hanzo
+  - Junkrat
+  - Mei
+  - Pharah
+  - Reaper
+  - Shion
+  - Sierra
+  - Sojourn
+  - "Soldier: 76"
+  - Sombra
+  - Symmetra
+  - Torbjörn
+  - Tracer
+  - Vendetta
+  - Venture
+  - Widowmaker
+support:
+  - Ana
+  - Baptiste
+  - Brigitte
+  - Illari
+  - Jetpack Cat
+  - Juno
+  - Kiriko
+  - Lifeweaver
+  - Lúcio
+  - Mercy
+  - Mizuki
+  - Moira
+  - Wuyang
+  - Zenyatta

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ club.name }}{% endblock %}</title>
+<link rel="stylesheet" href="{{ root }}fonts/fonts.css">
+<link rel="stylesheet" href="{{ root }}style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="club" href="{{ root }}index.html">
+      <span class="club-name">{{ club.name }}</span>
+      {% if club.season %}<span class="club-season">{{ club.season }} inhouses</span>{% endif %}
+    </a>
+    <nav aria-label="Site">
+      {% set links = [("index.html", "Leaderboard"), ("matches/index.html", "Matches"), ("heroes.html", "Heroes"), ("builder.html", "Team builder"), ("about.html", "How it works")] %}
+      {% for href, label in links %}
+      <a href="{{ root }}{{ href }}"{% if (page == href) or (page in ("matches.html", "match.html") and href.startswith("matches")) %} aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+{% block main %}{% endblock %}
+</main>
+<footer class="wrap footer">
+  <p>Built {{ built.strftime("%-d %b %Y, %H:%M") }} from {{ summary.maps }} Workshop logs with {% if club.repo %}<a href="{{ club.repo }}">Overtime</a>{% else %}Overtime{% endif %}. Overwatch is a trademark of Blizzard Entertainment; this site is not affiliated with Blizzard.</p>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>
