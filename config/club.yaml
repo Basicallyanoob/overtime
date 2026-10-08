@@ -6,6 +6,6 @@ season: Michaelmas 2026
 # Image file in this folder used as the site logo and browser icon.
 logo: logo.png
 # Players need this many finished maps to appear on a ranked leaderboard.
-min_maps: 5
+min_maps: 3
 # Link to this project's GitHub repository, shown in the footer (optional).
 repo: ""
