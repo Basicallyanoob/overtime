@@ -1,6 +1,0 @@
-# One entry per person. List every in-game name they have played under, so
-# alts and name changes count towards one profile. Names are not case-sensitive.
-# Anyone missing from this file still appears, under their in-game name.
-players:
-  - name: Pike
-    aliases: [PikeOnAlt]

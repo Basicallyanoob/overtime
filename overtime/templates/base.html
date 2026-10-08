@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}{{ club.name }}{% endblock %}</title>
+<title>{% block title %}{{ brand }} inhouses{% endblock %}</title>
+{% if logo %}<link rel="icon" href="{{ root }}{{ logo }}">{% endif %}
 <link rel="stylesheet" href="{{ root }}fonts/fonts.css">
 <link rel="stylesheet" href="{{ root }}style.css">
 </head>
@@ -11,8 +12,11 @@
 <header class="masthead">
   <div class="wrap masthead-inner">
     <a class="club" href="{{ root }}index.html">
-      <span class="club-name">{{ club.name }}</span>
-      {% if club.season %}<span class="club-season">{{ club.season }} inhouses</span>{% endif %}
+      {% if logo %}<img class="club-logo" src="{{ root }}{{ logo }}" alt="" width="52" height="59">{% endif %}
+      <span class="club-text">
+        <span class="club-name">{{ brand }}</span>
+        <span class="club-season">{{ club.name if club.short_name else "" }}{{ ", " if club.short_name and club.season }}{{ club.season }} inhouses</span>
+      </span>
     </a>
     <nav aria-label="Site">
       {% set links = [("index.html", "Leaderboard"), ("matches/index.html", "Matches"), ("heroes.html", "Heroes"), ("builder.html", "Team builder"), ("about.html", "How it works")] %}
@@ -26,7 +30,7 @@
 {% block main %}{% endblock %}
 </main>
 <footer class="wrap footer">
-  <p>Built {{ built.strftime("%-d %b %Y, %H:%M") }} from {{ summary.maps }} Workshop logs with {% if club.repo %}<a href="{{ club.repo }}">Overtime</a>{% else %}Overtime{% endif %}. Overwatch is a trademark of Blizzard Entertainment; this site is not affiliated with Blizzard.</p>
+  <p>{{ club.name }}. Built {{ built.strftime("%-d %b %Y, %H:%M") }} from {{ summary.maps }} Workshop log{{ "" if summary.maps == 1 else "s" }} with {% if club.repo %}<a href="{{ club.repo }}">Overtime</a>{% else %}Overtime{% endif %}. Overwatch is a trademark of Blizzard Entertainment; this site is not affiliated with Blizzard.</p>
 </footer>
 {% block scripts %}{% endblock %}
 </body>

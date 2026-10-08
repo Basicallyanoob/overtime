@@ -173,35 +173,45 @@ def hero_view(season: Season) -> dict:
 
 
 def builder_data(season: Season) -> list[dict]:
-    book = season.book
+    """Everyone who has played, plus roster members who have not yet."""
+    book, roster = season.book, season.roster
+    names = set(season.players) | set(roster.names)
     out = []
-    for p in sorted(season.players.values(), key=lambda p: p.name.casefold()):
-        counts = p.role_maps()
-        usual = [r for r in sorted(ROLES, key=lambda r: -counts[r]) if counts[r]]
-        o = book.get(p.name)
+    for name in sorted(names, key=str.casefold):
+        p = season.players.get(name)
+        counts = p.role_maps() if p else {}
+        history = [r for r in sorted(ROLES, key=lambda r: -counts.get(r, 0)) if counts.get(r)]
+        o = book.get(name)
         out.append({
-            "name": p.name, "rating": o.value if p.name in book.overall else None,
+            "name": name, "rating": o.value if name in book.overall else None,
             "overall": [round(o.mu, 4), round(o.sigma, 4)],
-            "roles": {r: [round(book.by_role[(p.name, r)].mu, 4), round(book.by_role[(p.name, r)].sigma, 4)]
-                      for r in ROLES if (p.name, r) in book.by_role},
-            "usual": usual or list(ROLES),
+            "roles": {r: [round(book.by_role[(name, r)].mu, 4), round(book.by_role[(name, r)].sigma, 4)]
+                      for r in ROLES if (name, r) in book.by_role},
+            # Roles the player asked for in players.csv win over what they have played.
+            "usual": roster.roles.get(name) or history or list(ROLES),
         })
     return out
 
 
-def render(season: Season, club: Club, out: Path, warnings: list[str]) -> list[Path]:
+def render(season: Season, club: Club, config_dir: Path, out: Path, warnings: list[str]) -> list[Path]:
     env = _env()
     if out.exists():
         shutil.rmtree(out)
     (out / "players").mkdir(parents=True)
     (out / "matches").mkdir()
     shutil.copytree(Path(__file__).parent / "static", out, dirs_exist_ok=True)
+    logo = None
+    if club.logo and (config_dir / club.logo).is_file():
+        logo = "logo" + (config_dir / club.logo).suffix.lower()
+        shutil.copy(config_dir / club.logo, out / logo)
 
     nights = defaultdict(list)
     for m in reversed(season.maps):
         nights[m.played_at.date()].append(match_view(season, m))
     hours = sum(m.duration for m in season.maps) / 3600
-    common = {"club": club, "built": datetime.now().replace(microsecond=0),
+    brand = " ".join(x for x in (club.short_name or club.name, club.game) if x)
+    common = {"club": club, "brand": brand, "logo": logo, "built": datetime.now().replace(microsecond=0),
+              "roster_size": len(season.roster.names),
               "summary": {"maps": len(season.maps), "players": len(season.players),
                           "hours": hours, "nights": len(nights)}}
     written = []

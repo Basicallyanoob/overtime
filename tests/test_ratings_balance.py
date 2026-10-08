@@ -37,7 +37,7 @@ def test_parse_roles():
     assert parse_roles("dps > support") == ["damage", "support"]
     assert parse_roles("any") == ["tank", "damage", "support"]
     with pytest.raises(ValueError):
-        parse_roles("healer")
+        parse_roles("sniper")
 
 
 def brute_force(signups, book):

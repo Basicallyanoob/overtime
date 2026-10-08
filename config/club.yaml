@@ -1,7 +1,11 @@
-# Shown in the site header and page titles.
-name: Demo University Esports
+# Shown in the site header, page titles and footer.
+name: Dublin University Esports Society
+short_name: DUES
+game: Overwatch
 season: Michaelmas 2026
-# Players need this many rated maps to appear on the ranked leaderboard.
+# Image file in this folder used as the site logo and browser icon.
+logo: logo.png
+# Players need this many finished maps to appear on a ranked leaderboard.
 min_maps: 5
-# Link in the footer to this project's GitHub repository (optional).
+# Link to this project's GitHub repository, shown in the footer (optional).
 repo: ""

@@ -216,6 +216,11 @@ def parse_text(text: str, map_id: str, played_at: datetime) -> MapResult:
     )
 
 
+def fingerprint(m: MapResult) -> tuple:
+    """Two copies of the same map log share this, whatever the file is called."""
+    return (m.map_name, round(m.duration, 2), tuple(sorted(p.name for p in m.players)))
+
+
 def parse_file(path: str | Path) -> MapResult:
     path = Path(path)
     text = path.read_text(encoding="utf-8", errors="replace")
@@ -225,20 +230,20 @@ def parse_file(path: str | Path) -> MapResult:
 def parse_folder(folder: str | Path) -> tuple[list[MapResult], list[str]]:
     """Parse every .txt log in a folder. Returns maps (oldest first) and warnings."""
     maps, warnings, seen = [], [], {}
-    for path in sorted(Path(folder).glob("*.txt")):
+    folder = Path(folder)
+    for path in sorted(folder.rglob("*.txt"), key=lambda p: (p.name, str(p))):
         try:
             m = parse_file(path)
         except LogError as exc:
-            warnings.append(f"{path.name}: skipped, {exc}")
+            warnings.append(f"{path.relative_to(folder)}: skipped, {exc}")
             continue
-        fingerprint = (m.map_name, round(m.duration, 2),
-                       tuple(sorted(p.name for p in m.players)))
-        if fingerprint in seen:
-            warnings.append(f"{path.name}: skipped, duplicate of {seen[fingerprint]}")
+        fp = fingerprint(m)
+        if fp in seen:
+            warnings.append(f"{path.relative_to(folder)}: skipped, duplicate of {seen[fp]}")
             continue
-        seen[fingerprint] = path.name
+        seen[fp] = str(path.relative_to(folder))
         if not m.complete:
-            warnings.append(f"{path.name}: no match_end, so it is shown but not rated")
+            warnings.append(f"{path.relative_to(folder)}: no match_end, so it is shown but not rated")
         maps.append(m)
     maps.sort(key=lambda m: (m.played_at, m.id))
     return maps, warnings

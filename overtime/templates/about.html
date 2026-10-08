@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}How it works, {{ club.name }}{% endblock %}
+{% block title %}How it works, {{ brand }}{% endblock %}
 {% block main %}
 <article class="prose">
 <h1>How it works</h1>
@@ -12,6 +12,9 @@
 
 <h2>Team builder</h2>
 <p>The <a href="builder.html">team builder</a> takes ten players and the roles each will play, then checks every legal 1-2-2 split and shows the three most even. It uses each player's rating for the role they are put in, and charges a small cost for every step below someone's first-choice role.</p>
+
+<h2>Joining the ladder</h2>
+<p>You appear as soon as you play a logged map, under your in-game name. Officers link alts and name changes to one profile, and record which roles you want to play, in <code>config/players.csv</code>; a BattleTag such as Name#1234 matches the in-game name Name. If your profile is split across two names, tell an officer.</p>
 
 <h2>Unfinished and missing maps</h2>
 <p>A log that stops before the end of the match still appears in the match list, marked unfinished, but does not change anyone's rating. Heroes released after this site was set up need adding to <code>config/heroes.yaml</code> before their maps count towards a role.</p>

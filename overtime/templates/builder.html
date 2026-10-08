@@ -1,14 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Team builder, {{ club.name }}{% endblock %}
+{% block title %}Team builder, {{ brand }}{% endblock %}
 {% block main %}
 <section class="intro">
   <h1>Team builder</h1>
-  <p class="lede">Tick the ten players in tonight's lobby. Each starts with the roles they usually play, in order of preference; select a role to add or remove it, and the order you select them in becomes the order of preference.</p>
+  <p class="lede">Tick the ten players in tonight's lobby. Each starts with the roles from the roster, or the ones they usually play, in order of preference; select a role to add or remove it, and the order you select them in becomes the order of preference. Players with no maps yet count as average.</p>
 </section>
 <div class="builder">
   <section class="picker" aria-label="Players">
     <label class="search"><span class="sr">Find a player</span><input type="search" id="find" placeholder="Find a player" autocomplete="off"></label>
     <ul id="players" class="pick-list"></ul>
+    <form id="guest" class="guest">
+      <label for="guest-name">Someone not on the list</label>
+      <span><input id="guest-name" type="text" autocomplete="off" placeholder="Their name"><button type="submit">Add</button></span>
+    </form>
   </section>
   <section class="result" aria-live="polite">
     <p id="status" class="status">Pick 10 players.</p>

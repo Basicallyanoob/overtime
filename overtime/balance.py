@@ -40,9 +40,12 @@ def parse_roles(text: str) -> list[str]:
     if text in ("", "any", "flex", "fill"):
         return list(ROLES)
     out = []
-    for part in text.replace(">", ",").replace("/", ",").split(","):
-        part = {"dps": "damage", "dmg": "damage", "heals": "support", "supp": "support"}.get(
-            part.strip(), part.strip())
+    for part in text.replace(">", ",").replace("/", ",").replace(";", ",").split(","):
+        part = part.strip()
+        part = {"dps": "damage", "dmg": "damage", "heals": "support", "supp": "support",
+                "healer": "support", "tanks": "tank", "flex": None}.get(part, part)
+        if part is None:
+            return list(ROLES)
         if part not in ROLES:
             raise ValueError(f"unknown role '{part}' in '{text}'")
         if part not in out:

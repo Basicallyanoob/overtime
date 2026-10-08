@@ -1,13 +1,4 @@
 player,roles
-# One row per player. Roles in order of preference, separated by > or commas.
-# Use tank, damage (or dps) and support, or 'any'.
-Kestrel,damage
-Marrow,tank
-Lumen,support
-Quill,damage>support
-Pike,any
-Rook,tank
-Vesper,dps
-Halcyon,damage/support
-Tidal,support
-Juniper,support>tank
+# One row per player in tonight's lobby, ten in total.
+# Roles are optional: leave them blank to use the roles in config/players.csv,
+# or list them in order of preference, e.g. support>damage, tank, or any.

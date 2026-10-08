@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% from "macros.html" import tile %}
-{% block title %}Matches, {{ club.name }}{% endblock %}
+{% block title %}Matches, {{ brand }}{% endblock %}
 {% block main %}
 <section class="intro"><h1>Matches</h1>
 <p class="lede">Every map from every club night, newest first. Team 1 is blue, team 2 is red.</p></section>
+{% if not nights %}<p class="empty">No maps logged yet. <a href="{{ root }}index.html">How to add them</a></p>{% endif %}
 {% for night, views in nights.items() %}
 <section>
   <h2>{{ night|day }}</h2>

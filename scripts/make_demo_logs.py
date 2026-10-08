@@ -1,10 +1,11 @@
-"""Write a synthetic season of ScrimTime logs so the site has something to show.
+"""Write an invented season of ScrimTime logs, for trying the site and for tests.
 
-Every player, name and number here is invented. Each player has a hidden skill
+Every player, name and number here is made up. Each player has a hidden skill
 per role; teams are drawn at random and results follow the skill gap, so the
-ratings on the demo site should roughly rediscover who is good at what.
+ratings should roughly rediscover who is good at what.
 
-    python scripts/make_demo_logs.py            # writes into logs/
+    python scripts/make_demo_logs.py --out demo-logs
+    python -m overtime --logs demo-logs build --out demo-site
 """
 from __future__ import annotations
 
@@ -189,7 +190,7 @@ def _add(rng, cum, hero, role, seconds, skill, won):
     cum[hero] = [str(x) for x in row] + [str(acc[k]) for k in ("elims", "fb", "deaths", "dmg", "heal", "blk", "time")]
 
 
-def main(folder: Path = ROOT / "logs", seed: int = 7):
+def main(folder: Path, seed: int = 7) -> int:
     rng = random.Random(seed)
     folder.mkdir(exist_ok=True)
     for old in folder.glob("Log-*.txt"):
@@ -204,7 +205,14 @@ def main(folder: Path = ROOT / "logs", seed: int = 7):
             write_map(rng, night + timedelta(minutes=17 * i, seconds=rng.randint(0, 59)), lobby, folder)
             count += 1
     print(f"wrote {count} demo maps to {folder}")
+    return count
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out", default="demo-logs", help="folder to write logs into (default: demo-logs)")
+    ap.add_argument("--seed", type=int, default=7)
+    a = ap.parse_args()
+    main(Path(a.out), a.seed)

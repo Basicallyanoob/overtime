@@ -87,6 +87,7 @@ class Season:
     hero_roles: dict[str, str]
     book: RatingBook
     unknown_heroes: set[str]
+    roster: Roster = field(default_factory=Roster)
 
     @property
     def rated_maps(self) -> list[MapResult]:
@@ -150,4 +151,4 @@ def build_season(maps: list[MapResult], roster: Roster, hero_roles: dict[str, st
         return [(p.name, hero_roles.get(p.main_hero)) for p in m.team(team)]
 
     book = rate_maps((m.id, m.winner, lineup(m, 1), lineup(m, 2)) for m in maps if m.complete)
-    return Season(maps, players, dict(heroes), hero_roles, book, unknown)
+    return Season(maps, players, dict(heroes), hero_roles, book, unknown, roster)

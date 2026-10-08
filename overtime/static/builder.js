@@ -209,4 +209,20 @@
 
   players.forEach(p => list.append(row(p)));
   update();
+
+  // Newcomers on the night: add them without editing players.csv first.
+  document.getElementById("guest").addEventListener("submit", e => {
+    e.preventDefault();
+    const input = document.getElementById("guest-name");
+    const name = input.value.trim();
+    if (!name) return;
+    if (ratings[name]) { status.textContent = `${name} is already on the list.`; return; }
+    const p = { name, rating: null, overall: [MU, SIGMA], roles: {}, usual: ROLES.slice() };
+    players.push(p);
+    ratings[name] = p;
+    const li = row(p);
+    list.prepend(li);
+    li.querySelector("input[type=checkbox]").click();
+    input.value = "";
+  });
 })();

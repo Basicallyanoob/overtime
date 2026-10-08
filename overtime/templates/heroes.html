@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% from "macros.html" import player_link %}
-{% block title %}Heroes, {{ club.name }}{% endblock %}
+{% block title %}Heroes, {{ brand }}{% endblock %}
 {% block main %}
 <section class="intro"><h1>Heroes</h1>
 <p class="lede">Share of all time played, and how often a team won when the hero was a player's main pick for the map. Inhouse teams are random, so win rates on a handful of maps say more about who played the hero than about the hero.</p></section>
+{% if not roles %}<p class="empty">Hero stats appear once the first map is logged.</p>{% endif %}
 {% for role, rows in roles.items() %}
 <section>
   <h2>{{ ROLE_LABEL.get(role, "Not in heroes.yaml") }}</h2>
