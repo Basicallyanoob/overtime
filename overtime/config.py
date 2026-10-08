@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -69,15 +70,44 @@ def load_club(config_dir: Path) -> Club:
     return Club(**{k: v for k, v in data.items() if k in Club.__dataclass_fields__})
 
 
-def load_heroes(config_dir: Path) -> dict[str, str]:
+class HeroRoles(dict):
+    """Hero -> current role, remembering heroes that moved role on a given date.
+
+    `get(hero)` gives today's role; `on(hero, when)` the role on a past map.
+    """
+
+    def __init__(self, current: dict[str, str], before: dict[str, list[tuple[date, str]]] | None = None):
+        super().__init__(current)
+        self.before = before or {}  # hero -> [(date the change took effect, role until then)]
+
+    def on(self, hero: str, when) -> str | None:
+        day = when.date() if hasattr(when, "date") else when
+        for changed, old_role in sorted(self.before.get(hero, [])):
+            if day < changed:
+                return old_role
+        return self.get(hero)
+
+
+def load_heroes(config_dir: Path) -> HeroRoles:
     data = _load_yaml(config_dir / "heroes.yaml") or {}
-    roles = {}
-    for role, heroes in data.items():
-        if role not in ROLES:
-            raise ValueError(f"heroes.yaml: unknown role '{role}', use one of {ROLES}")
-        for hero in heroes or []:
-            roles[str(hero)] = role
-    return roles
+    roles, before = {}, {}
+    for key, value in data.items():
+        if key == "role_changes":
+            for ch in value or []:
+                old = str(ch["was"]).lower()
+                if old not in ROLES:
+                    raise ValueError(f"heroes.yaml: role_changes: unknown role '{old}' for {ch['hero']}")
+                changed = ch["from"] if isinstance(ch["from"], date) else date.fromisoformat(str(ch["from"]))
+                before.setdefault(str(ch["hero"]), []).append((changed, old))
+            continue
+        if key not in ROLES:
+            raise ValueError(f"heroes.yaml: unknown role '{key}', use one of {ROLES}")
+        for hero in value or []:
+            roles[str(hero)] = key
+    for hero in before:
+        if hero not in roles:
+            raise ValueError(f"heroes.yaml: role_changes mentions {hero}, who is not in the hero lists")
+    return HeroRoles(roles, before)
 
 
 def read_roster_rows(path: Path) -> list[dict[str, str]]:

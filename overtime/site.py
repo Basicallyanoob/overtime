@@ -88,7 +88,7 @@ def match_view(season: Season, m) -> dict:
             heroes = sorted(p.heroes, key=lambda h: -p.heroes[h]["time_played"])
             rows.append({
                 "player": season.players[p.name], "ingame": p.name,
-                "heroes": heroes, "role": season.hero_roles.get(p.main_hero),
+                "heroes": heroes, "role": season.hero_roles.on(p.main_hero, m.played_at),
                 "stats": {k: p.total(k) for k in ("eliminations", "final_blows", "deaths",
                                                     "hero_damage", "healing", "damage_blocked")},
                 "delta": deltas.get(p.name),

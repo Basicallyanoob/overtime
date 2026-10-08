@@ -6,7 +6,7 @@ import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from .config import ROLES, Roster
+from .config import ROLES, HeroRoles, Roster
 from .parse import STAT_KEYS, MapResult
 from .ratings import RatingBook, rate_maps
 
@@ -84,7 +84,7 @@ class Season:
     maps: list[MapResult]
     players: dict[str, PlayerSeason]
     heroes: dict[str, dict]
-    hero_roles: dict[str, str]
+    hero_roles: HeroRoles
     book: RatingBook
     unknown_heroes: set[str]
     roster: Roster = field(default_factory=Roster)
@@ -94,7 +94,7 @@ class Season:
         return [m for m in self.maps if m.complete]
 
 
-def build_season(maps: list[MapResult], roster: Roster, hero_roles: dict[str, str]) -> Season:
+def build_season(maps: list[MapResult], roster: Roster, hero_roles: HeroRoles) -> Season:
     unknown: set[str] = set()
     players: dict[str, PlayerSeason] = {}
     heroes: dict[str, dict] = defaultdict(lambda: {"time": 0.0, "maps": 0, "wins": 0, "rated": 0})
@@ -113,7 +113,7 @@ def build_season(maps: list[MapResult], roster: Roster, hero_roles: dict[str, st
                 ps = players[p.name] = PlayerSeason(p.name, slug)
             ps.ingame_names.add(ingame)
             main = p.main_hero
-            role = hero_roles.get(main)
+            role = hero_roles.on(main, m.played_at)
             for hero, s in p.heroes.items():
                 if hero not in hero_roles:
                     unknown.add(hero)
@@ -148,7 +148,7 @@ def build_season(maps: list[MapResult], roster: Roster, hero_roles: dict[str, st
                             rec[1] += m.winner == team
 
     def lineup(m: MapResult, team: int):
-        return [(p.name, hero_roles.get(p.main_hero)) for p in m.team(team)]
+        return [(p.name, hero_roles.on(p.main_hero, m.played_at)) for p in m.team(team)]
 
     book = rate_maps((m.id, m.winner, lineup(m, 1), lineup(m, 2)) for m in maps if m.complete)
     return Season(maps, players, dict(heroes), hero_roles, book, unknown, roster)

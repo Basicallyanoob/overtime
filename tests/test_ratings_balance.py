@@ -76,3 +76,18 @@ def test_balancer_rejects_impossible_lobbies():
         balance([Signup("a", ["tank"])], RatingBook())
     with pytest.raises(ValueError, match="no legal teams"):
         balance([Signup(f"p{i}", ["damage"]) for i in range(10)], RatingBook())
+
+
+def test_hero_role_changes_apply_by_date(tmp_path):
+    from datetime import datetime
+
+    from overtime.config import load_heroes
+
+    (tmp_path / "heroes.yaml").write_text(
+        "damage: [Tracer]\nsupport: [Sombra]\n"
+        "role_changes:\n  - hero: Sombra\n    was: damage\n    from: 2026-10-06\n", encoding="utf-8")
+    roles = load_heroes(tmp_path)
+    assert roles.get("Sombra") == "support"
+    assert roles.on("Sombra", datetime(2026, 10, 5, 20, 0)) == "damage"
+    assert roles.on("Sombra", datetime(2026, 10, 6, 19, 0)) == "support"
+    assert roles.on("Tracer", datetime(2020, 1, 1)) == "damage"
