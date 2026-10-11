@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% from "macros.html" import delta, player_link %}
+{% set p = v.p %}
+{% block title %}{{ p.name }}, {{ brand }}{% endblock %}
+{% block main %}
+<section class="profile-head">
+  <h1>{{ p.name }}</h1>
+  <p class="aka">Riot ID {{ p.riot_ids|sort|join(", ") }}</p>
+  {% if other %}<nav class="profile-games" aria-label="{{ p.name }} in each game"><a href="{{ other }}">Overwatch</a><span aria-current="page">Valorant</span></nav>{% endif %}
+  <dl class="figures">
+    <div><dt>Rating</dt><dd>{{ v.rating|num if v.rating is not none else "Unrated" }}</dd></div>
+    <div><dt>Record</dt><dd>{{ v.record }}</dd></div>
+    <div><dt>Win rate</dt><dd>{{ v.winrate|pct }}</dd></div>
+    <div><dt>ACS</dt><dd>{{ v.r.acs|num }}</dd></div>
+    <div><dt>K/D</dt><dd>{{ v.r.kd|num(2) }}</dd></div>
+    {% if v.r.adr is not none %}<div><dt>ADR</dt><dd>{{ v.r.adr|num }}</dd></div>{% endif %}
+    {% if v.r.hs is not none %}<div><dt>Headshots</dt><dd>{{ v.r.hs|pct }}</dd></div>{% endif %}
+  </dl>
+</section>
+
+{% if v.chart %}
+{% set c = v.chart %}
+<section>
+  <h2>Rating after each game</h2>
+  <figure class="chart">
+    <svg viewBox="0 0 {{ c.w }} {{ c.h }}" role="img" aria-label="Rating went from {{ c.pts[0].v }} after the first game to {{ c.pts[-1].v }} after the latest">
+      {% for g in c.grid %}
+      <line class="grid{% if g.v == 1000 %} base{% endif %}" x1="{{ c.x0 }}" x2="{{ c.x1 }}" y1="{{ g.y }}" y2="{{ g.y }}"/>
+      <text class="axis" x="{{ c.x0 - 8 }}" y="{{ g.y + 4 }}" text-anchor="end">{{ g.v|num }}</text>
+      {% endfor %}
+      <polyline class="line" points="{{ c.line }}"/>
+      {% for pt in c.pts %}
+      <a href="{{ groot }}matches/{{ pt.id }}.html">
+        <circle class="hit" cx="{{ pt.x }}" cy="{{ pt.y }}" r="10"><title>{{ pt.label }}: {{ pt.v|num }}</title></circle>
+        <circle class="dot{% if loop.last %} last{% endif %}" cx="{{ pt.x }}" cy="{{ pt.y }}" r="{{ 4.5 if loop.last else 3 }}"/>
+      </a>
+      {% endfor %}
+      <text class="axis" x="{{ c.x0 }}" y="{{ c.h - 6 }}">{{ c.first }}</text>
+      <text class="axis" x="{{ c.x1 }}" y="{{ c.h - 6 }}" text-anchor="end">{{ c.last }}</text>
+    </svg>
+    <figcaption>Each point is a game; select one to open its scoreboard. Everyone starts at 1,000, the rating of an average player.</figcaption>
+  </figure>
+</section>
+{% endif %}
+
+<section>
+  <h2>Agents</h2>
+  {% if v.classes %}<p class="lede class-split">{% for c in v.classes %}{{ c.cls }} {{ c.share|pct }}{{ ", " if not loop.last }}{% endfor %} of games.</p>{% endif %}
+  <div class="scroll">
+  <table>
+    <thead><tr><th scope="col">Agent</th><th scope="col">Class</th><th scope="col" class="num">Games</th><th scope="col" class="num">Win rate</th><th scope="col" class="num">ACS</th><th scope="col" class="num">K/D</th><th scope="col" class="num opt">ADR</th><th scope="col" class="num opt">HS%</th></tr></thead>
+    <tbody>
+    {% for a in v.agents %}
+    <tr><td class="name">{{ a.agent }}</td><td>{{ a.cls }}</td><td class="num">{{ a.maps }}</td>
+      <td class="num">{{ a.winrate|pct if a.winrate is not none else "–" }}</td>
+      <td class="num">{{ a.r.acs|num }}</td><td class="num">{{ a.r.kd|num(2) }}</td>
+      <td class="num opt">{{ a.r.adr|num if a.r.adr is not none else "–" }}</td>
+      <td class="num opt">{{ a.r.hs|pct if a.r.hs is not none else "–" }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+{% if v.best_mates %}
+<section>
+  <h2>Best teammates</h2>
+  <p class="lede">Win rate on the same team, from players you have teamed with at least three times.</p>
+  <ul class="mates">
+    {% for m in v.best_mates %}<li>{{ player_link(m.player, groot) }} <span>{{ m.wins }} of {{ m.games }} won, {{ m.winrate|pct }}</span></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section>
+  <h2>Games played</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th scope="col">Date</th><th scope="col">Map</th><th scope="col">Result</th><th scope="col" class="num">Score</th><th scope="col">Agent</th><th scope="col" class="num">ACS</th><th scope="col" class="num">K / D / A</th><th scope="col" class="num">Rating</th></tr></thead>
+    <tbody>
+    {% for r in v.recent %}
+    {% set m = r.a.map %}
+    <tr>
+      <td>{{ m.played_at.strftime("%-d %b") }}</td>
+      <td><a href="{{ groot }}matches/{{ m.id }}.html">{{ m.map_name }}</a></td>
+      <td><span class="result {{ r.a.result }}">{{ r.a.result|capitalize }}</span></td>
+      <td class="num">{% if r.a.team == 1 %}{{ m.score[0] }}–{{ m.score[1] }}{% else %}{{ m.score[1] }}–{{ m.score[0] }}{% endif %}</td>
+      <td>{{ r.a.line.agent }}</td>
+      <td class="num">{{ r.acs|num }}</td>
+      <td class="num">{{ r.a.line.kills }} / {{ r.a.line.deaths }} / {{ r.a.line.assists }}</td>
+      <td class="num">{{ delta(r.delta) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

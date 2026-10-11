@@ -1,0 +1,19 @@
+{% macro delta(v) -%}
+{% if v is none %}<span class="delta none">–</span>{% else %}<span class="delta {{ 'up' if v > 0 else ('down' if v < 0 else 'flat') }}">{{ v|signed }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro tile(v, root) -%}
+{% set m = v.map %}
+<a class="tile{% if not m.complete %} unfinished{% endif %}" href="{{ root }}matches/{{ m.id }}.html">
+  <span class="tile-map">{{ m.map_name }}</span>
+  <span class="tile-score">
+    <span class="side t1{% if m.complete and m.winner == 1 %} won{% endif %}"><span class="sr">{{ m.team_names[0] }} </span>{{ m.score[0] }}</span>
+    <span class="side t2{% if m.complete and m.winner == 2 %} won{% endif %}"><span class="sr">{{ m.team_names[1] }} </span>{{ m.score[1] }}</span>
+  </span>
+  <span class="tile-meta">{{ m.map_type }}, {{ m.played_at|clock }}{% if v.upset %}<span class="tag">Upset</span>{% endif %}{% if not m.complete %}<span class="tag">Unfinished</span>{% endif %}</span>
+</a>
+{%- endmacro %}
+
+{% macro player_link(p, root) -%}
+<a href="{{ root }}players/{{ p.slug }}.html">{{ p.name }}</a>
+{%- endmacro %}

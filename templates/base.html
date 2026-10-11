@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ brand }} inhouses{% endblock %}</title>
+{% if logo %}<link rel="icon" href="{{ root }}{{ logo }}">{% endif %}
+<link rel="stylesheet" href="{{ root }}fonts/fonts.css">
+<link rel="stylesheet" href="{{ root }}style.css">
+</head>
+<body class="game-{{ game }}">
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="club" href="{{ groot }}index.html">
+      {% if logo %}<img class="club-logo" src="{{ root }}{{ logo }}" alt="" width="52" height="59">{% endif %}
+      <span class="club-text">
+        <span class="club-name">{{ brand }}</span>
+        <span class="club-season">{{ club.name if club.short_name else "" }}{{ ", " if club.short_name and club.season }}{{ club.season }} inhouses</span>
+      </span>
+    </a>
+    <div class="masthead-nav">
+      {% if valorant_on %}
+      <nav class="games" aria-label="Game">
+        <a href="{{ root }}index.html"{% if game == "overwatch" %} aria-current="page"{% endif %}>Overwatch</a>
+        <a href="{{ root }}valorant/index.html"{% if game == "valorant" %} aria-current="page"{% endif %}>Valorant</a>
+      </nav>
+      {% endif %}
+      <nav class="site-nav" aria-label="Site">
+        {% if game == "valorant" %}
+        {% set links = [("index.html", "Leaderboard", "index"), ("matches/index.html", "Matches", "matches"), ("agents.html", "Agents", "heroes"), ("builder.html", "Team builder", "builder"), ("about.html", "How it works", "about")] %}
+        {% else %}
+        {% set links = [("index.html", "Leaderboard", "index"), ("matches/index.html", "Matches", "matches"), ("heroes.html", "Heroes", "heroes"), ("builder.html", "Team builder", "builder"), ("about.html", "How it works", "about")] %}
+        {% endif %}
+        {% for href, label, key in links %}
+        <a href="{{ groot }}{{ href }}"{% if section == key %} aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </nav>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+{% block main %}{% endblock %}
+</main>
+<footer class="wrap footer">
+  {% if game == "valorant" %}
+  <p>{{ club.name }}. Built {{ built.strftime("%-d %b %Y, %H:%M") }} from {{ summary.maps }} game{{ "" if summary.maps == 1 else "s" }} with {% if club.repo %}<a href="{{ club.repo }}">Overtime</a>{% else %}Overtime{% endif %}; match data from the unofficial <a href="https://docs.henrikdev.xyz">HenrikDev API</a>. This site isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, Valorant and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
+  {% else %}
+  <p>{{ club.name }}. Built {{ built.strftime("%-d %b %Y, %H:%M") }} from {{ summary.maps }} Workshop log{{ "" if summary.maps == 1 else "s" }} with {% if club.repo %}<a href="{{ club.repo }}">Overtime</a>{% else %}Overtime{% endif %}. Overwatch is a trademark of Blizzard Entertainment; this site is not affiliated with Blizzard.</p>
+  {% endif %}
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "macros.html" import delta, tile, player_link %}
+{% block title %}{{ brand }} inhouses{% endblock %}
+{% block main %}
+{% if not summary.maps %}
+<section class="intro">
+  <h1>No games yet</h1>
+  <p class="lede">This page fills in after the first Valorant inhouse is imported. {% if roster_size %}Members with a Riot ID in the roster can already be picked in the <a href="{{ groot }}builder.html">team builder</a>.{% endif %}</p>
+  <ol class="steps">
+    <li><strong>Get an API key.</strong> Join the HenrikDev Discord, open the <a href="https://api.henrikdev.xyz/dashboard/">dashboard</a> and make a Basic key.</li>
+    <li><strong>Add it to GitHub.</strong> In the repository, <em>Settings &gt; Secrets and variables &gt; Actions</em>, add a secret called <code>HENRIKDEV_API_KEY</code>.</li>
+    <li><strong>List the accounts to check.</strong> Put the host's Riot ID, and two or three regulars', under <code>accounts</code> in <code>config/valorant.yaml</code>.{% if not settings.accounts %} None are listed yet.{% endif %}</li>
+    <li><strong>Play, then import.</strong> After an inhouse, open <em>Actions &gt; Build site &gt; Run workflow</em>. It also runs every morning by itself, and this page updates when it finishes.</li>
+  </ol>
+</section>
+{% else %}
+<section class="intro">
+  <h1>Leaderboard</h1>
+  <p class="lede">{{ summary.maps }} game{{ '' if summary.maps == 1 else 's' }} over {{ summary.nights }} club night{{ '' if summary.nights == 1 else 's' }}, {{ summary.players }} players, {{ summary.rounds|num }} rounds. Ratings update after every game; you need {{ club.min_maps }} games to be ranked. ACS is average combat score per round, ADR average damage per round.</p>
+  {% if unknown_agents %}<p class="notice">Agents missing from config/agents.yaml: {{ unknown_agents|join(", ") }}. Add them so they show under their class.</p>{% endif %}
+</section>
+
+<section aria-label="Leaderboard">
+  {% if board.rows %}
+  <div class="scroll">
+  <table class="ladder">
+    <caption class="sr">Valorant leaderboard</caption>
+    <thead><tr>
+      <th scope="col" class="num">#</th><th scope="col">Player</th><th scope="col" class="num">Rating</th>
+      <th scope="col" class="num" title="Rating change over the most recent club night">Latest night</th>
+      <th scope="col" class="num">Games</th><th scope="col" class="num">W–L</th><th scope="col" class="num">Win rate</th>
+      <th scope="col" class="num">ACS</th><th scope="col" class="num opt">K/D</th><th scope="col" class="num opt">ADR</th>
+      <th scope="col" class="num opt">HS%</th><th scope="col" class="opt">Plays</th>
+    </tr></thead>
+    <tbody>
+    {% for r in board.rows %}
+    <tr>
+      <td class="num rank">{{ loop.index }}</td>
+      <td class="name">{{ player_link(r.player, groot) }}</td>
+      <td class="num rating">{{ r.rating|num }}</td>
+      <td class="num">{{ delta(r.change) }}</td>
+      <td class="num">{{ r.maps }}</td><td class="num">{{ r.record }}</td><td class="num">{{ r.winrate|pct }}</td>
+      <td class="num">{{ r.r.acs|num }}</td>
+      <td class="num opt">{{ r.r.kd|num(2) }}</td>
+      <td class="num opt">{{ r.r.adr|num if r.r.adr is not none else "–" }}</td>
+      <td class="num opt">{{ r.r.hs|pct if r.r.hs is not none else "–" }}</td>
+      <td class="opt heroes">{% if r.cls %}<span class="cls">{{ r.cls }}</span> {% endif %}{{ r.agents|join(", ") }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty">Nobody has played {{ club.min_maps }} games yet.</p>
+  {% endif %}
+  {% if board.unranked %}
+  <p class="unranked">Not ranked yet, fewer than {{ club.min_maps }} games:
+    {% for r in board.unranked %}{{ player_link(r.player, groot) }} ({{ r.maps }}){{ ", " if not loop.last }}{% endfor %}</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Latest games</h2>
+  <div class="tiles">{% for v in recent %}{{ tile(v, groot) }}{% endfor %}</div>
+  <p><a href="{{ groot }}matches/index.html">All {{ summary.maps }} games</a></p>
+</section>
+{% endif %}
+{% if warnings %}
+<details class="warnings"><summary>{{ warnings|length }} file{{ '' if warnings|length == 1 else 's' }} in valorant/ needed attention</summary>
+<ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul></details>
+{% endif %}
+{% endblock %}

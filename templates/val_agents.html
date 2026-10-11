@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros.html" import player_link %}
+{% block title %}Agents, {{ brand }}{% endblock %}
+{% block main %}
+<section class="intro"><h1>Agents</h1>
+<p class="lede">Share of all rounds played, and how often a team won with the agent in it. Inhouse teams are random, so win rates on a handful of games say more about who played the agent than about the agent.</p></section>
+{% if not classes %}<p class="empty">Agent stats appear once the first game is imported.</p>{% endif %}
+{% for cls, rows in classes.items() %}
+<section>
+  <h2>{{ (CLASS_LABEL[cls] ~ "s") if cls in CLASS_LABEL else "Not in agents.yaml" }}</h2>
+  <div class="scroll">
+  <table class="hero-table">
+    <thead><tr><th scope="col">Agent</th><th scope="col">Share of rounds</th><th scope="col" class="num">Games</th><th scope="col" class="num">Win rate</th><th scope="col" class="num">ACS</th><th scope="col" class="num opt">K/D</th><th scope="col" class="opt">Played most by</th></tr></thead>
+    <tbody>
+    {% for a in rows %}
+    <tr>
+      <td class="name">{{ a.agent }}</td>
+      <td><div class="share"><span class="bar" style="--w: {{ (a.share / rows[0].share * 100)|round(1) }}"></span><span>{{ (a.share * 100)|num(1) }}%</span></div></td>
+      <td class="num">{{ a.maps }}</td>
+      <td class="num">{{ a.winrate|pct if a.maps >= 3 else "–" }}</td>
+      <td class="num">{{ a.r.acs|num }}</td>
+      <td class="num opt">{{ a.r.kd|num(2) }}</td>
+      <td class="opt">{{ player_link(a.top, groot) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

@@ -2,7 +2,8 @@ from overtime.cli import main
 
 
 def build(logs, config, out):
-    return main(["--logs", str(logs), "--config", str(config), "build", "--out", str(out)])
+    return main(["--logs", str(logs), "--valorant", str(out.parent / "no-valorant"), "--config", str(config),
+                 "build", "--out", str(out)])
 
 
 def test_build_site(demo_logs, config, tmp_path):

@@ -1,0 +1,18 @@
+# Valorant inhouses. Delete this file to turn the Valorant pages off.
+
+# Riot IDs whose match history is checked for inhouse games, as Name#Tag.
+# Every inhouse needs at least one of these accounts in the lobby, so list
+# the usual host and two or three regulars. Games found through more than
+# one account are only counted once.
+accounts: []
+
+# Account region: eu, na, ap, kr, latam or br. Irish accounts are eu.
+region: eu
+
+# How many recent games to check per account. 20 covers a long club night;
+# raise it if imports run less often than weekly.
+history: 20
+
+# A custom game only counts as an inhouse with at least this many players,
+# so warm-ups and 1v1 tests are skipped.
+min_players: 10

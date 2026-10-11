@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}How it works, {{ brand }}{% endblock %}
+{% block main %}
+<article class="prose">
+<h1>How it works</h1>
+<p>Valorant has no log file for custom games, so these pages read match history instead. The unofficial <a href="https://docs.henrikdev.xyz">HenrikDev API</a> returns an account's recent games with full scoreboards, custom games included. After each club night the site checks the accounts listed in <code>config/valorant.yaml</code>{% if settings.accounts %} ({{ settings.accounts|length }} at the moment){% endif %}, keeps finished custom games with at least {{ settings.min_players }} players, and saves a copy of each in the club's repository. A game found through two accounts is only counted once.</p>
+<p>A game can also be typed in from the end-of-game scoreboard as a spreadsheet, when the API is down or nobody on the list was in the lobby. Those games have no damage or headshot figures, so they leave those columns out of the averages.</p>
+
+<h2>Ratings</h2>
+<p>Everyone has one Valorant rating, separate from Overwatch: being good at one says little about the other. After every game the winners' ratings go up and the losers' go down, by more when the result was a surprise. The model is Plackett-Luce from the openskill library, the same as the Overwatch ladder, and everyone starts at 1,000. You need {{ club.min_maps }} games before you appear on the leaderboard.</p>
+<p>Only the result counts, not the round score or anyone's stats. A player who spends the game smoking and flashing for others can have a quiet scoreboard in a game their team won.</p>
+
+<h2>The numbers</h2>
+<p><strong>ACS</strong> is average combat score per round, Riot's own measure of contribution from kills, damage and assists. <strong>ADR</strong> is average damage per round. <strong>HS%</strong> is the share of hits that were headshots. <strong>FB</strong> is first bloods, the first kill of a round. Agents are grouped as duelist, initiator, controller or sentinel; a player's class on the leaderboard is the one they play most.</p>
+
+<h2>Team builder</h2>
+<p>The <a href="builder.html">team builder</a> takes ten players and checks all 126 ways of splitting them into two teams of five, then shows the three closest by total rating. Valorant has no role queue, so it does not place anyone in a role. It does try to give each side someone who mainly plays controller, when the lobby has two or more: a side without one counts as 40 rating points of imbalance.</p>
+
+<h2>Joining the ladder</h2>
+<p>You appear as soon as you play an imported game, under your Riot name. Officers link your Riot ID to your club name in the <code>riot_ids</code> column of <code>config/players.csv</code>, which also joins your Overwatch and Valorant profiles. Once linked, a Riot name change does not split your profile: the site follows your account, not your name.</p>
+</article>
+{% endblock %}

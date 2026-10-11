@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Team builder, {{ brand }}{% endblock %}
+{% block main %}
+<section class="intro">
+  <h1>Team builder</h1>
+  <p class="lede">Tick the ten players in tonight's lobby. Every way of splitting them into two fives is checked, and the three closest by rating are shown. Agents are picked in the lobby, but when two or more players mainly play controller, the builder tries to put one on each side. Players with no games yet count as average.</p>
+</section>
+<div class="builder">
+  <section class="picker" aria-label="Players">
+    <label class="search"><span class="sr">Find a player</span><input type="search" id="find" placeholder="Find a player" autocomplete="off"></label>
+    <ul id="players" class="pick-list val-pick"></ul>
+    <form id="guest" class="guest">
+      <label for="guest-name">Someone not on the list</label>
+      <span><input id="guest-name" type="text" autocomplete="off" placeholder="Their name"><button type="submit">Add</button></span>
+    </form>
+  </section>
+  <section class="result" aria-live="polite">
+    <p id="status" class="status">Pick 10 players.</p>
+    <button id="make" type="button" disabled>Make teams</button>
+    <div id="options"></div>
+  </section>
+</div>
+<script id="data" type="application/json">{{ data|safe }}</script>
+{% endblock %}
+{% block scripts %}<script src="{{ root }}valbuilder.js"></script>{% endblock %}

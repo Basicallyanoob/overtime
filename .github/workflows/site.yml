@@ -1,20 +1,27 @@
 # Rebuilds and publishes the site whenever logs or config change on main.
-# One-time setup: Settings > Pages > Build and deployment > Source: GitHub Actions.
+# It also runs every morning, and from Actions > Build site > Run workflow, to
+# fetch new Valorant inhouse games and save them to the repository first.
+# One-time setup:
+#   Settings > Pages > Build and deployment > Source: GitHub Actions.
+#   For Valorant: Settings > Secrets and variables > Actions > New repository
+#   secret, named HENRIKDEV_API_KEY, holding the key from the HenrikDev dashboard.
 name: Build site
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * *"  # 05:17 UTC every day, after the night's games
 
 permissions:
-  contents: read
+  contents: write  # to save fetched Valorant games
   pages: write
   id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -26,6 +33,22 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
+      - name: Fetch new Valorant games
+        if: github.event_name != 'push'
+        continue-on-error: true  # a down API should not stop the site updating
+        env:
+          HENRIKDEV_API_KEY: ${{ secrets.HENRIKDEV_API_KEY }}
+        run: python -m overtime valorant fetch --optional
+      - name: Save them to the repository
+        if: github.event_name != 'push'
+        run: |
+          git add valorant
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Add Valorant games"
+            git push
+          fi
       - run: python -m overtime build --out site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

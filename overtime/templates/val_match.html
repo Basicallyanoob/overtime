@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "macros.html" import delta, player_link %}
+{% set m = v.map %}
+{% block title %}{{ m.map_name }}, {{ m.played_at|day }}{% endblock %}
+{% block main %}
+<section class="match-head">
+  <p class="crumb"><a href="{{ groot }}matches/index.html">Matches</a> / {{ m.played_at|day }}, {{ m.played_at|clock }}</p>
+  <h1>{{ m.map_name }}</h1>
+  <div class="scoreline" aria-label="Rounds won">
+    <div class="side t1{% if v.teams[0].won %} won{% endif %}"><span class="team">{{ m.team_names[0] }}</span><span class="score">{{ m.score[0] }}</span></div>
+    <div class="side t2{% if v.teams[1].won %} won{% endif %}"><span class="score">{{ m.score[1] }}</span><span class="team">{{ m.team_names[1] }}</span></div>
+  </div>
+  <p class="lede">
+    {{ m.rounds }} rounds{% if m.duration %}, {{ m.duration|mmss }}{% endif %}.
+    {% if m.winner == 0 %}A draw.{% else %}{{ m.team_names[m.winner - 1] }} won.{% endif %}
+    {% if v.prediction is not none %}
+    Before the game the ratings gave {{ m.team_names[0] }} a {{ v.prediction|pct }} chance{% if v.upset %}, so this was an upset{% endif %}.
+    {% endif %}
+    {% if m.source == "manual" %}Typed in from the scoreboard, so damage and headshots are not recorded.{% endif %}
+  </p>
+</section>
+{% for t in v.teams %}
+<section class="team-block t{{ t.no }}">
+  <h2>{{ t.name }}{% if t.won %}, winners{% endif %}</h2>
+  <div class="scroll">
+  <table>
+    <caption class="sr">{{ t.name }} scoreboard</caption>
+    <thead><tr><th scope="col">Player</th><th scope="col">Agent</th><th scope="col" class="num">ACS</th><th scope="col" class="num">K</th><th scope="col" class="num">D</th><th scope="col" class="num">A</th><th scope="col" class="num">+/–</th><th scope="col" class="num opt">ADR</th><th scope="col" class="num opt">HS%</th><th scope="col" class="num opt" title="First kill of a round">FB</th><th scope="col" class="num">Rating</th></tr></thead>
+    <tbody>
+    {% for r in t.rows %}
+    {% set l = r.line %}
+    <tr>
+      <td class="name">{{ player_link(r.player, groot) }}{% if r.riot.partition("#")[0] != r.player.name %}<span class="alias">as {{ r.riot }}</span>{% endif %}</td>
+      <td>{{ l.agent }}{% if r.cls %}<span class="alias">{{ r.cls }}</span>{% endif %}</td>
+      <td class="num">{{ r.r.acs|num }}</td>
+      <td class="num">{{ l.kills }}</td><td class="num">{{ l.deaths }}</td><td class="num">{{ l.assists }}</td>
+      {% set diff = l.kills - l.deaths %}
+      <td class="num"><span class="pm {{ 'up' if diff > 0 else ('down' if diff < 0 else 'flat') }}">{{ diff|signed }}</span></td>
+      <td class="num opt">{{ r.r.adr|num if r.r.adr is not none else "–" }}</td>
+      <td class="num opt">{{ r.r.hs|pct if r.r.hs is not none else "–" }}</td>
+      <td class="num opt">{{ l.first_bloods if l.first_bloods is not none else "–" }}</td>
+      <td class="num">{{ delta(r.delta) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

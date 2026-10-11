@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import tile %}
+{% block title %}Matches, {{ brand }}{% endblock %}
+{% block main %}
+<section class="intro"><h1>Matches</h1>
+<p class="lede">Every inhouse game, newest first, with rounds won by each side.</p></section>
+{% if not nights %}<p class="empty">No games imported yet. <a href="{{ groot }}index.html">How to add them</a></p>{% endif %}
+{% for night, views in nights.items() %}
+<section>
+  <h2>{{ night|day }}</h2>
+  <div class="tiles">{% for v in views %}{{ tile(v, groot) }}{% endfor %}</div>
+</section>
+{% endfor %}
+{% endblock %}

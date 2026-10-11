@@ -193,7 +193,13 @@ def builder_data(season: Season) -> list[dict]:
     return out
 
 
-def render(season: Season, club: Club, config_dir: Path, out: Path, warnings: list[str]) -> list[Path]:
+SECTIONS = {"index.html": "index", "matches.html": "matches", "match.html": "matches",
+            "heroes.html": "heroes", "agents.html": "heroes", "builder.html": "builder", "about.html": "about"}
+
+
+def render(season: Season, club: Club, config_dir: Path, out: Path, warnings: list[str],
+           val=None) -> list[Path]:
+    """Write the site. `val` is (ValSeason, settings, warnings) when the Valorant pages are on."""
     env = _env()
     if out.exists():
         shutil.rmtree(out)
@@ -210,14 +216,20 @@ def render(season: Season, club: Club, config_dir: Path, out: Path, warnings: li
         nights[m.played_at.date()].append(match_view(season, m))
     hours = sum(m.duration for m in season.maps) / 3600
     brand = " ".join(x for x in (club.short_name or club.name, club.game) if x)
+    # Profiles are joined across games only for roster members, never by a coincidence of names.
+    members = set(season.roster.names)
+    val_slugs = {p.name: p.slug for p in val[0].players.values() if p.name in members} if val else {}
+    ow_slugs = {p.name: p.slug for p in season.players.values() if p.name in members}
     common = {"club": club, "brand": brand, "logo": logo, "built": datetime.now().replace(microsecond=0),
-              "roster_size": len(season.roster.names),
+              "roster_size": len(season.roster.names), "valorant_on": val is not None, "game": "overwatch",
               "summary": {"maps": len(season.maps), "players": len(season.players),
                           "hours": hours, "nights": len(nights)}}
     written = []
 
     def page(template: str, path: str, depth: int, **ctx):
-        html = env.get_template(template).render(**common, **ctx, root="../" * depth, page=template)
+        root = "../" * depth
+        html = env.get_template(template).render(**{**common, **ctx}, root=root, groot=root, page=template,
+                                                 section=SECTIONS.get(template))
         target = out / path
         target.write_text(html, encoding="utf-8")
         written.append(target)
@@ -231,9 +243,15 @@ def render(season: Season, club: Club, config_dir: Path, out: Path, warnings: li
         for v in night:
             page("match.html", f"matches/{v['map'].id}.html", 1, v=v)
     for p in season.players.values():
-        page("player.html", f"players/{p.slug}.html", 1, v=player_view(season, p, club))
+        page("player.html", f"players/{p.slug}.html", 1, v=player_view(season, p, club),
+             other=f"../valorant/players/{val_slugs[p.name]}.html" if p.name in val_slugs else None)
     page("heroes.html", "heroes.html", 0, roles=hero_view(season))
     page("builder.html", "builder.html", 0,
          data=json.dumps(builder_data(season), ensure_ascii=False).replace("</", "<\\/"))
     page("about.html", "about.html", 0)
+    if val:
+        from .val_site import render_valorant
+
+        written += render_valorant(env, out, {**common, "summary_ow": common["summary"]}, club, *val,
+                                   ow_slugs=ow_slugs)
     return written

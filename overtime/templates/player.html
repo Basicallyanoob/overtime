@@ -7,6 +7,7 @@
   <h1>{{ p.name }}</h1>
   {% set others = p.ingame_names|reject("equalto", p.name)|list %}
   {% if others %}<p class="aka">Also plays as {{ others|sort|join(", ") }}</p>{% endif %}
+  {% if other %}<nav class="profile-games" aria-label="{{ p.name }} in each game"><span aria-current="page">Overwatch</span><a href="{{ other }}">Valorant</a></nav>{% endif %}
   <dl class="figures">
     <div><dt>Rating</dt><dd>{{ v.rating|num if v.rating is not none else "Unrated" }}</dd></div>
     <div><dt>Record</dt><dd>{{ v.record }}</dd></div>

@@ -4,16 +4,20 @@
     overtime players [--add]            list in-game names missing from players.csv
     overtime build                      make the website in site/
     overtime teams signups.csv          balance ten players from a sign-up sheet
+    overtime valorant fetch             save new Valorant inhouse games from the API
+    overtime valorant import FILE.json  save games from API responses saved as files
 """
 from __future__ import annotations
 
 import argparse
 import csv
+import os
 import sys
 from pathlib import Path
 
 from .balance import Signup, balance, parse_roles
-from .config import ROSTER_FILE, append_players, load_club, load_heroes, load_roster
+from .config import (ROSTER_FILE, append_players, load_agents, load_club, load_heroes, load_roster,
+                     load_valorant)
 from .parse import parse_folder
 from .stats import build_season
 
@@ -26,14 +30,19 @@ def _season(args):
     return season, warnings
 
 
-def _maybe_add(args, names: dict[str, int]) -> None:
+def _maybe_add(args, names: dict[str, int], riot: bool = False) -> None:
     if not names:
         return
     if args.add:
-        path = append_players(Path(args.config), list(names))
-        print(f"Added {len(names)} name{'s' if len(names) != 1 else ''} to {path}. Open it in a "
-              "spreadsheet to give each person one display name, merge alts onto one row "
-              "(in-game names separated by ;) and fill in their roles.")
+        path = append_players(Path(args.config), list(names), riot=riot)
+        if riot:
+            print(f"Added {len(names)} Riot ID{'s' if len(names) != 1 else ''} to {path}. Open it in a "
+                  "spreadsheet to give each person one display name; if someone also plays Overwatch, "
+                  "move their Riot ID onto their existing row so the two profiles join up.")
+        else:
+            print(f"Added {len(names)} name{'s' if len(names) != 1 else ''} to {path}. Open it in a "
+                  "spreadsheet to give each person one display name, merge alts onto one row "
+                  "(in-game names separated by ;) and fill in their roles.")
     else:
         print(f"Run again with --add to put them in config/{ROSTER_FILE}.")
 
@@ -47,11 +56,26 @@ def cmd_build(args) -> int:
     if season.unknown_heroes:
         print("warning: add these heroes to config/heroes.yaml:",
               ", ".join(sorted(season.unknown_heroes)), file=sys.stderr)
-    pages = render(season, load_club(Path(args.config)), Path(args.config), Path(args.out), warnings)
+    val = None
+    settings = load_valorant(Path(args.config))
+    if settings is not None:
+        from .val_stats import build_val_season
+        from .valorant import load_folder
+
+        vmaps, vwarn = load_folder(Path(args.valorant))
+        vseason = build_val_season(vmaps, season.roster, load_agents(Path(args.config)))
+        for w in vwarn:
+            print("warning:", w, file=sys.stderr)
+        if vseason.unknown_agents:
+            print("warning: add these agents to config/agents.yaml:",
+                  ", ".join(sorted(vseason.unknown_agents)), file=sys.stderr)
+        val = (vseason, settings, vwarn)
+    pages = render(season, load_club(Path(args.config)), Path(args.config), Path(args.out), warnings, val=val)
     if not season.maps:
         print(f"No maps in {args.logs}/ yet, so the site shows how to add them.")
-    print(f"Built {len(pages)} pages from {len(season.maps)} maps and "
-          f"{len(season.players)} players into {args.out}/")
+    print(f"Built {len(pages)} pages into {args.out}/: Overwatch from {len(season.maps)} maps and "
+          f"{len(season.players)} players" + (f", Valorant from {len(val[0].maps)} games and "
+                                               f"{len(val[0].players)} players." if val else "."))
     return 0
 
 
@@ -94,6 +118,69 @@ def cmd_players(args) -> int:
     return 0
 
 
+def _val_report(args, report) -> None:
+    if report.checked:
+        print(f"Checked: {', '.join(report.checked)}")
+    for e in report.errors:
+        print("warning:", e, file=sys.stderr)
+    print(f"Added {len(report.added)} new game{'s' if len(report.added) != 1 else ''}"
+          f"{', skipped ' + str(report.duplicates) + ' already saved' if report.duplicates else ''}.")
+    for p in report.added:
+        print("  +", p.relative_to(Path(args.valorant)) if p.is_relative_to(Path(args.valorant)) else p)
+    if report.skipped:
+        print("Not inhouses:", ", ".join(f"{n} × {why}" for why, n in sorted(report.skipped.items(), key=lambda x: -x[1])))
+    if report.new_ids:
+        print("New Riot IDs, not in players.csv yet:", ", ".join(f"{n} ({c})" for n, c in report.new_ids.items()))
+    _maybe_add(args, report.new_ids, riot=True)
+
+
+def cmd_val_fetch(args) -> int:
+    from .valorant import ValorantError, fetch
+
+    settings = load_valorant(Path(args.config))
+    if settings is None:
+        if args.optional:
+            print("No config/valorant.yaml, so the Valorant pages are off.")
+            return 0
+        print("error: config/valorant.yaml is missing, so the Valorant pages are off", file=sys.stderr)
+        return 1
+    if args.history:
+        settings.history = args.history
+    key = os.environ.get("HENRIKDEV_API_KEY", "").strip()
+    if not key and args.optional:
+        print("No HENRIKDEV_API_KEY set, so no Valorant games were fetched.")
+        return 0
+    try:
+        report = fetch(settings, key, Path(args.valorant), load_roster(Path(args.config)), args.account or None)
+    except ValorantError as exc:
+        if args.optional and "no accounts" in str(exc):
+            print(f"Skipping Valorant: {exc}.")
+            return 0
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    _val_report(args, report)
+    return 1 if report.errors and not report.checked else 0
+
+
+def cmd_val_import(args) -> int:
+    from .valorant import ValorantError, import_files
+
+    settings = load_valorant(Path(args.config))
+    if settings is None:
+        print("error: config/valorant.yaml is missing, so the Valorant pages are off", file=sys.stderr)
+        return 1
+    if args.min_players:
+        settings.min_players = args.min_players
+    try:
+        report = import_files([Path(f) for f in args.files], Path(args.valorant), settings,
+                              load_roster(Path(args.config)))
+    except (FileNotFoundError, ValorantError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    _val_report(args, report)
+    return 0
+
+
 def cmd_teams(args) -> int:
     season, _ = _season(args)
     with open(args.signups, newline="", encoding="utf-8-sig") as fh:
@@ -129,6 +216,7 @@ def main(argv=None) -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--logs", default="logs", help="folder of ScrimTime .txt logs (default: logs)")
     ap.add_argument("--config", default="config", help="folder with club.yaml, heroes.yaml, players.csv")
+    ap.add_argument("--valorant", default="valorant", help="folder of saved Valorant games (default: valorant)")
     sub = ap.add_subparsers(dest="command", required=True)
     i = sub.add_parser("import", help="copy new ScrimTime logs into the logs folder")
     i.add_argument("sources", nargs="*", help="folders, .txt logs or a .zip (default: the Workshop folder)")
@@ -145,6 +233,19 @@ def main(argv=None) -> int:
     t.add_argument("signups", help="CSV of player,roles; roles default to those in players.csv")
     t.add_argument("--options", type=int, default=3, help="how many lineups to show")
     t.set_defaults(func=cmd_teams)
+    v = sub.add_parser("valorant", help="Valorant inhouses: fetch or import games")
+    vsub = v.add_subparsers(dest="valorant_command", required=True)
+    vf = vsub.add_parser("fetch", help="save new inhouse games from the accounts in config/valorant.yaml")
+    vf.add_argument("--account", action="append", help="check this Riot ID instead (Name#Tag); repeatable")
+    vf.add_argument("--history", type=int, help="games to check per account")
+    vf.add_argument("--add", action="store_true", help="also add new Riot IDs to players.csv")
+    vf.add_argument("--optional", action="store_true", help=argparse.SUPPRESS)  # for CI: no key, no error
+    vf.set_defaults(func=cmd_val_fetch)
+    vi = vsub.add_parser("import", help="save inhouse games from API responses saved as .json files")
+    vi.add_argument("files", nargs="+")
+    vi.add_argument("--min-players", type=int, help="count custom games with fewer players (for testing)")
+    vi.add_argument("--add", action="store_true", help="also add new Riot IDs to players.csv")
+    vi.set_defaults(func=cmd_val_import)
     args = ap.parse_args(argv)
     return args.func(args)
 

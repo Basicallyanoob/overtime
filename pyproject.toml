@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Stats, ratings and team balancing for Overwatch club inhouses, from Workshop logs"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["jinja2>=3.1", "pyyaml>=6", "openskill>=6,<7"]
+dependencies = ["jinja2>=3.1", "pyyaml>=6", "openskill>=6,<7", "tzdata"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]

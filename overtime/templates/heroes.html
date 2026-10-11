@@ -15,7 +15,7 @@
     {% for h in rows %}
     <tr>
       <td class="name">{{ h.hero }}</td>
-      <td class="share"><span class="bar" style="--w: {{ (h.share / rows[0].share * 100)|round(1) }}%"></span><span>{{ (h.share * 100)|num(1) }}%</span></td>
+      <td><div class="share"><span class="bar" style="--w: {{ (h.share / rows[0].share * 100)|round(1) }}"></span><span>{{ (h.share * 100)|num(1) }}%</span></div></td>
       <td class="num">{{ h.maps }}</td>
       <td class="num">{{ h.winrate|pct if h.rated >= 3 else "–" }}</td>
       <td class="opt">{{ player_link(h.top, root) }}</td>
