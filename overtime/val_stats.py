@@ -10,7 +10,7 @@ from .stats import slugify
 from .valorant import ValMatch, ValPlayer
 
 TOTAL_KEYS = ("rounds", "score", "kills", "deaths", "assists", "damage", "damage_rounds",
-              "headshots", "shots", "first_bloods", "fb_rounds")
+              "headshots", "shots", "first_bloods", "fb_rounds", "plants", "plant_games")
 
 
 def _blank() -> dict:
@@ -32,6 +32,9 @@ def add_line(tot: dict, p: ValPlayer, rounds: int) -> None:
     if p.first_bloods is not None:
         tot["first_bloods"] += p.first_bloods
         tot["fb_rounds"] += rounds
+    if p.plants is not None:
+        tot["plants"] += p.plants
+        tot["plant_games"] += 1
 
 
 def rates(tot: dict) -> dict:
@@ -43,7 +46,8 @@ def rates(tot: dict) -> dict:
         "kpr": tot["kills"] / r if r else None,
         "adr": tot["damage"] / tot["damage_rounds"] if tot["damage_rounds"] else None,
         "hs": tot["headshots"] / tot["shots"] if tot["shots"] else None,
-        "fb": tot["first_bloods"] / tot["fb_rounds"] * 24 if tot["fb_rounds"] else None,  # per 24 rounds
+        "fbpr": tot["first_bloods"] / tot["fb_rounds"] if tot["fb_rounds"] else None,  # first bloods per round
+        "plants": tot["plants"] if tot["plant_games"] else None,  # spike plants in total
     }
 
 

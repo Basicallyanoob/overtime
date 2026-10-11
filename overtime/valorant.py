@@ -49,6 +49,7 @@ class ValPlayer:
     legshots: int | None = None
     damage: int | None = None
     first_bloods: int | None = None
+    plants: int | None = None  # spike plants
     name: str = ""  # club display name, filled in by the season builder
 
     @property
@@ -106,14 +107,41 @@ def is_inhouse(raw: dict, min_players: int) -> tuple[bool, str]:
     return True, ""
 
 
+def _first_bloods(raw: dict) -> dict[str, int] | None:
+    """Who got the first kill of each round, from the match's kill feed."""
+    kills = raw.get("kills")
+    if not kills:
+        return None
+    first: dict[int, tuple[int, str]] = {}
+    for k in kills:
+        rnd, at, who = k.get("round"), k.get("time_in_round_in_ms"), (k.get("killer") or {}).get("puuid")
+        if rnd is None or at is None or not who:
+            continue
+        if rnd not in first or at < first[rnd][0]:
+            first[rnd] = (at, who)
+    out: dict[str, int] = {}
+    for _, who in first.values():
+        out[who] = out.get(who, 0) + 1
+    return out
+
+
+def _plants(raw: dict) -> dict[str, int] | None:
+    rounds = raw.get("rounds")
+    if not rounds:
+        return None
+    out: dict[str, int] = {}
+    for rnd in rounds:
+        who = ((rnd.get("plant") or {}).get("player") or {}).get("puuid")
+        if who:
+            out[who] = out.get(who, 0) + 1
+    return out
+
+
 def trim(raw: dict) -> dict:
     """Keep what the site uses from an API match (about 3% of its size)."""
     md = raw["metadata"]
-    first = {}
-    for rnd in raw.get("rounds") or []:
-        fb = rnd.get("first_blood") or {}
-        if fb.get("puuid"):
-            first[fb["puuid"]] = first.get(fb["puuid"], 0) + 1
+    first = _first_bloods(raw)
+    plants = _plants(raw)
     teams = {t["team_id"]: (t.get("rounds") or {}).get("won", 0) for t in raw["teams"]}
     players = []
     for p in raw["players"]:
@@ -125,7 +153,9 @@ def trim(raw: dict) -> dict:
             "score": st.get("score", 0), "kills": st.get("kills", 0), "deaths": st.get("deaths", 0),
             "assists": st.get("assists", 0), "headshots": st.get("headshots"),
             "bodyshots": st.get("bodyshots"), "legshots": st.get("legshots"),
-            "damage": dmg.get("dealt"), "first_bloods": first.get(p.get("puuid"), 0),
+            "damage": dmg.get("dealt"),
+            "first_bloods": None if first is None else first.get(p.get("puuid"), 0),
+            "plants": None if plants is None else plants.get(p.get("puuid"), 0),
         })
     return {
         "format": "overtime-valorant-1", "source": "henrikdev", "id": md["match_id"],
@@ -150,7 +180,7 @@ def from_trimmed(data: dict, path: Path | None = None) -> ValMatch:
     side = {name: i + 1 for i, name in enumerate(TEAMS)}
     players = [ValPlayer(p["puuid"], p["name"], p.get("tag", ""), side[p["team"]], p["agent"],
                          p["score"], p["kills"], p["deaths"], p["assists"], p.get("headshots"),
-                         p.get("bodyshots"), p.get("legshots"), p.get("damage"), p.get("first_bloods"))
+                         p.get("bodyshots"), p.get("legshots"), p.get("damage"), p.get("first_bloods"), p.get("plants"))
                for p in data["players"]]
     return ValMatch(data["id"], data["map"], _local(data["started_at"]), data.get("length_ms", 0) / 1000,
                     (data["rounds"].get("Blue", 0), data["rounds"].get("Red", 0)), players,
@@ -171,6 +201,7 @@ _CSV_COLUMNS = {
     "deaths": {"d", "deaths"},
     "assists": {"a", "assists"},
     "first_bloods": {"fb", "first bloods", "first_bloods", "first kills"},
+    "plants": {"plants", "spike plants"},
 }
 _TEAM_WORDS = {"blue": 1, "a": 1, "1": 1, "team a": 1, "defenders": 1,
                "red": 2, "b": 2, "2": 2, "team b": 2, "attackers": 2}
@@ -180,7 +211,7 @@ def parse_scoreboard_csv(path: Path) -> ValMatch:
     """One map typed in from the scoreboard: a row per player.
 
     Columns: date, map, team, rounds (won by that team), player, agent,
-    acs, kills, deaths, assists, and optionally first_bloods.
+    acs, kills, deaths, assists, and optionally first_bloods and plants.
     """
     with path.open(encoding="utf-8-sig", newline="") as fh:
         rows = [r for r in csv.reader(fh) if any(c.strip() for c in r) and not r[0].lstrip().startswith("#")]
@@ -229,11 +260,12 @@ def parse_scoreboard_csv(path: Path) -> ValMatch:
     out = []
     for r, team, line in players:
         name, _, tag = get(r, "player").partition("#")
-        fb = get(r, "first_bloods")
+        fb, pl = get(r, "first_bloods"), get(r, "plants")
         out.append(ValPlayer(f"manual:{normalise_riot(get(r, 'player'))}", name.strip(), tag.strip(), team,
                              get(r, "agent") or "Unknown", num(r, "acs", line) * rounds,
                              num(r, "kills", line), num(r, "deaths", line), num(r, "assists", line),
-                             first_bloods=int(fb) if fb.isdigit() else None))
+                             first_bloods=int(fb) if fb.isdigit() else None,
+                             plants=int(pl) if pl.isdigit() else None))
     return ValMatch(f"manual-{_slug(path.parent.name)}-{_slug(path.stem)}", get(first, "map") or "Unknown map", played, 0,
                     (score[1], score[2]), out, "manual", path)
 

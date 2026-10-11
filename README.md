@@ -51,7 +51,7 @@ After that the *Build site* workflow fetches new games every morning by itself. 
 
 **From your own computer:** `HENRIKDEV_API_KEY=HDEV-... python -m overtime valorant fetch` does the same (on Windows, `set HENRIKDEV_API_KEY=HDEV-...` first). `--account "Name#Tag"` checks one account instead. A page of results saved from the API test link can be imported with `python -m overtime valorant import saved.json`.
 
-**If the API is down, or nobody on the list played,** type the scoreboard in: copy `examples/valorant-scoreboard.csv`, fill in a row per player (team, rounds won, agent, ACS, kills, deaths, assists, and first bloods if you have them) and save it in that night's folder in `valorant/`. Those games have no damage or headshot figures, and leave them out of the averages.
+**If the API is down, or nobody on the list played,** type the scoreboard in: copy `examples/valorant-scoreboard.csv`, fill in a row per player (team, rounds won, agent, ACS, kills, deaths, assists, and first bloods and plants if you have them) and save it in that night's folder in `valorant/`. Those games have no damage or headshot figures, and leave them out of the averages.
 
 Delete `config/valorant.yaml` to turn the Valorant pages off.
 

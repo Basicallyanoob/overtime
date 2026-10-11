@@ -25,7 +25,7 @@
   <div class="scroll">
   <table>
     <caption class="sr">{{ t.name }} scoreboard</caption>
-    <thead><tr><th scope="col">Player</th><th scope="col">Agent</th><th scope="col" class="num">ACS</th><th scope="col" class="num">K</th><th scope="col" class="num">D</th><th scope="col" class="num">A</th><th scope="col" class="num">+/–</th><th scope="col" class="num opt">ADR</th><th scope="col" class="num opt">HS%</th><th scope="col" class="num opt" title="First kill of a round">FB</th><th scope="col" class="num">Rating</th></tr></thead>
+    <thead><tr><th scope="col">Player</th><th scope="col">Agent</th><th scope="col" class="num">ACS</th><th scope="col" class="num">K</th><th scope="col" class="num">D</th><th scope="col" class="num">A</th><th scope="col" class="num">+/–</th><th scope="col" class="num opt">ADR</th><th scope="col" class="num opt">HS%</th><th scope="col" class="num opt" title="First kill of a round">FB</th><th scope="col" class="num opt" title="Spike plants">Plants</th><th scope="col" class="num">Rating</th></tr></thead>
     <tbody>
     {% for r in t.rows %}
     {% set l = r.line %}
@@ -39,6 +39,7 @@
       <td class="num opt">{{ r.r.adr|num if r.r.adr is not none else "–" }}</td>
       <td class="num opt">{{ r.r.hs|pct if r.r.hs is not none else "–" }}</td>
       <td class="num opt">{{ l.first_bloods if l.first_bloods is not none else "–" }}</td>
+      <td class="num opt">{{ l.plants if l.plants is not none else "–" }}</td>
       <td class="num">{{ delta(r.delta) }}</td>
     </tr>
     {% endfor %}

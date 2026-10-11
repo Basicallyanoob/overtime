@@ -72,7 +72,7 @@ def game(rng, ids, lineup, start: datetime, mapname: str) -> dict:
             players.append({"puuid": ids[p], "name": p, "tag": tag, "team": team, "agent": agent,
                             "score": round(kills * 150 + damage * 0.9 + assists * 25 + rng.gauss(0, 150)),
                             "kills": kills, "assists": assists, "damage": damage, "headshots": heads,
-                            "bodyshots": shots - heads - legs, "legshots": legs, "deaths": 0, "first_bloods": 0})
+                            "bodyshots": shots - heads - legs, "legshots": legs, "deaths": 0, "first_bloods": 0, "plants": 0})
             team_kills[team] += kills
     # Deaths mirror the other team's kills; first bloods lean towards strong players.
     for team, other in (("Blue", "Red"), ("Red", "Blue")):
@@ -85,6 +85,11 @@ def game(rng, ids, lineup, start: datetime, mapname: str) -> dict:
     for _ in range(rounds):
         weights = [math.exp(0.5 * PLAYERS[x["name"]][1]) for x in players]
         rng.choices(players, weights)[0]["first_bloods"] += 1
+    # The spike goes down in a bit over half the rounds; each side attacks for half the game.
+    for r in range(rounds):
+        if rng.random() < 0.58:
+            attackers = [x for x in players if x["team"] == ("Red" if (r < 12) == (r % 2 == 0) else "Blue")]
+            rng.choice(attackers)["plants"] += 1
     return {"format": "overtime-valorant-1", "source": "henrikdev", "id": str(uuid.UUID(int=rng.getrandbits(128))),
             "map": mapname, "started_at": start.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
             "length_ms": rounds * rng.randint(95000, 115000), "server": "London",
@@ -95,10 +100,10 @@ def write_csv(path: Path, g: dict, start: datetime) -> None:
     rounds = sum(g["rounds"].values())
     with path.open("w", encoding="utf-8", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["date", "map", "team", "rounds", "player", "agent", "acs", "kills", "deaths", "assists", "first_bloods"])
+        w.writerow(["date", "map", "team", "rounds", "player", "agent", "acs", "kills", "deaths", "assists", "first_bloods", "plants"])
         for p in g["players"]:
             w.writerow([f"{start:%Y-%m-%d %H:%M}", g["map"], p["team"], g["rounds"][p["team"]], f"{p['name']}#{p['tag']}",
-                        p["agent"], round(p["score"] / rounds), p["kills"], p["deaths"], p["assists"], p["first_bloods"]])
+                        p["agent"], round(p["score"] / rounds), p["kills"], p["deaths"], p["assists"], p["first_bloods"], p["plants"]])
 
 
 def main(folder: Path, seed: int = 11) -> int:

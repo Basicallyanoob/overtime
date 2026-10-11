@@ -16,7 +16,7 @@
 {% else %}
 <section class="intro">
   <h1>Leaderboard</h1>
-  <p class="lede">{{ summary.maps }} game{{ '' if summary.maps == 1 else 's' }} over {{ summary.nights }} club night{{ '' if summary.nights == 1 else 's' }}, {{ summary.players }} players, {{ summary.rounds|num }} rounds. Ratings update after every game; you need {{ club.min_maps }} games to be ranked. ACS is average combat score per round, ADR average damage per round.</p>
+  <p class="lede">{{ summary.maps }} game{{ '' if summary.maps == 1 else 's' }} over {{ summary.nights }} club night{{ '' if summary.nights == 1 else 's' }}, {{ summary.players }} players, {{ summary.rounds|num }} rounds. Ratings update after every game; you need {{ club.min_maps }} games to be ranked. ACS is average combat score per round, KPR kills per round, ADR average damage per round, FBPR first bloods (a round's first kill) per round, and HS% the share of shots that hit the head. Plants is spike plants in total.</p>
   {% if unknown_agents %}<p class="notice">Agents missing from config/agents.yaml: {{ unknown_agents|join(", ") }}. Add them so they show under their class.</p>{% endif %}
 </section>
 
@@ -29,8 +29,13 @@
       <th scope="col" class="num">#</th><th scope="col">Player</th><th scope="col" class="num">Rating</th>
       <th scope="col" class="num" title="Rating change over the most recent club night">Latest night</th>
       <th scope="col" class="num">Games</th><th scope="col" class="num">W–L</th><th scope="col" class="num">Win rate</th>
-      <th scope="col" class="num">ACS</th><th scope="col" class="num opt">K/D</th><th scope="col" class="num opt">ADR</th>
-      <th scope="col" class="num opt">HS%</th><th scope="col" class="opt">Plays</th>
+      <th scope="col" class="num" title="Average combat score per round">ACS</th>
+      <th scope="col" class="num opt" title="Kills per round">KPR</th>
+      <th scope="col" class="num opt" title="Average damage per round">ADR</th>
+      <th scope="col" class="num opt" title="First bloods per round: how often they got the round's first kill">FBPR</th>
+      <th scope="col" class="num opt" title="Share of shots that hit the head">HS%</th>
+      <th scope="col" class="num opt" title="Spike plants, in total">Plants</th>
+      <th scope="col" class="num opt">K/D</th><th scope="col" class="opt">Plays</th>
     </tr></thead>
     <tbody>
     {% for r in board.rows %}
@@ -41,10 +46,13 @@
       <td class="num">{{ delta(r.change) }}</td>
       <td class="num">{{ r.maps }}</td><td class="num">{{ r.record }}</td><td class="num">{{ r.winrate|pct }}</td>
       <td class="num">{{ r.r.acs|num }}</td>
-      <td class="num opt">{{ r.r.kd|num(2) }}</td>
+      <td class="num opt">{{ r.r.kpr|num(2) }}</td>
       <td class="num opt">{{ r.r.adr|num if r.r.adr is not none else "–" }}</td>
+      <td class="num opt">{{ r.r.fbpr|num(2) if r.r.fbpr is not none else "–" }}</td>
       <td class="num opt">{{ r.r.hs|pct if r.r.hs is not none else "–" }}</td>
-      <td class="opt heroes">{% if r.cls %}<span class="cls">{{ r.cls }}</span> {% endif %}{{ r.agents|join(", ") }}</td>
+      <td class="num opt">{{ r.r.plants if r.r.plants is not none else "–" }}</td>
+      <td class="num opt">{{ r.r.kd|num(2) }}</td>
+      <td class="opt heroes">{% if r.cls %}<span class="cls">{{ r.cls }}</span> {% endif %}{{ r.agents[:2]|join(", ") }}</td>
     </tr>
     {% endfor %}
     </tbody>

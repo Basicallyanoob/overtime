@@ -57,7 +57,8 @@ def match_view(season: ValSeason, m) -> dict:
                    "damage": p.damage or 0, "damage_rounds": m.rounds if p.damage is not None else 0,
                    "headshots": p.headshots or 0,
                    "shots": (p.headshots or 0) + (p.bodyshots or 0) + (p.legshots or 0) if p.headshots is not None else 0,
-                   "first_bloods": p.first_bloods or 0, "fb_rounds": m.rounds if p.first_bloods is not None else 0}
+                   "first_bloods": p.first_bloods or 0, "fb_rounds": m.rounds if p.first_bloods is not None else 0,
+                   "plants": p.plants or 0, "plant_games": 1 if p.plants is not None else 0}
             rows.append({"player": season.players[p.name], "line": p, "r": rates(tot),
                          "cls": CLASS_LABEL.get(season.classes.get(p.agent), ""), "delta": deltas.get(p.name),
                          "riot": p.riot_id})

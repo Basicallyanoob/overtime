@@ -10,7 +10,7 @@ import pytest
 from overtime.cli import main
 from overtime.config import AgentClasses, ValorantSettings, append_players, load_roster, read_roster_rows
 from overtime.val_stats import build_val_season
-from overtime.valorant import ValorantError, fetch, import_files, is_inhouse, load_folder
+from overtime.valorant import ValorantError, fetch, from_trimmed, import_files, is_inhouse, load_folder, trim
 
 AGENTS = ["Jett", "Omen", "Sova", "Killjoy", "Sage"]
 
@@ -26,11 +26,17 @@ def api_match(mid="m1", queue=("", "Custom Game"), players=10, start="2026-10-14
                    "agent": {"name": AGENTS[i % 5]},
                    "stats": {"score": 4000 + 100 * i, "kills": 15, "deaths": 12, "assists": 4, "headshots": 10,
                              "bodyshots": 30, "legshots": 2, "damage": {"dealt": 3000, "received": 2800}}})
-    rounds = [{"first_blood": {"puuid": puuids[0]}} for _ in range(3)] + [{"first_blood": None}]
+    who = lambda i: {"puuid": puuids[i % len(puuids)], "name": names[i % len(names)][0], "tag": "EUW", "team": "Blue"}
+    # Kill feed out of order on purpose: the first blood is the earliest kill in each round.
+    kills = [{"round": 0, "time_in_round_in_ms": 8000, "killer": who(5)}, {"round": 0, "time_in_round_in_ms": 5000, "killer": who(0)},
+             {"round": 1, "time_in_round_in_ms": 4000, "killer": who(0)}, {"round": 1, "time_in_round_in_ms": 3000, "killer": who(5)},
+             {"round": 2, "time_in_round_in_ms": 1000, "killer": who(0)}]
+    rounds = [{"id": 0, "plant": {"site": "A", "player": who(1)}}, {"id": 1, "plant": None},
+              {"id": 2, "plant": {"site": "B", "player": who(1)}}, {"id": 3}]
     return {"metadata": {"match_id": mid, "map": {"name": mapname}, "started_at": start, "is_completed": True,
                          "game_length_in_ms": 2_000_000, "cluster": "London",
                          "queue": {"id": queue[0], "name": queue[1], "mode_type": "Standard"}},
-            "players": ps, "rounds": rounds, "kills": [],
+            "players": ps, "rounds": rounds, "kills": kills,
             "teams": [{"team_id": "Blue", "rounds": {"won": blue, "lost": red}},
                       {"team_id": "Red", "rounds": {"won": red, "lost": blue}}]}
 
@@ -59,7 +65,7 @@ def test_import_trims_and_skips_duplicates(tmp_path):
     assert not again.added and again.duplicates == 1
     (m,), warnings = load_folder(dest)
     assert not warnings and m.score == (13, 9) and m.winner == 1 and m.rounds == 22
-    assert m.played_at.hour == 19 and m.team(1)[0].first_bloods == 3 and m.team(1)[0].damage == 3000
+    assert m.played_at.hour == 19 and m.team(1)[0].first_bloods == 2 and m.team(1)[0].damage == 3000
 
 
 class FakeAPI:
@@ -178,3 +184,14 @@ def test_empty_valorant_shows_how_to_start(demo_logs, config, tmp_path):
                  "build", "--out", str(out)]) == 0
     page = (out / "valorant" / "index.html").read_text(encoding="utf-8")
     assert "No games yet" in page and "HENRIKDEV_API_KEY" in page
+
+
+def test_first_bloods_and_plants_come_from_the_kill_feed_and_rounds():
+    m = from_trimmed(trim(api_match()))
+    by = {p.riot_name: p for p in m.players}
+    assert (by["P0"].first_bloods, by["P5"].first_bloods, by["P1"].first_bloods) == (2, 1, 0)
+    assert (by["P1"].plants, by["P0"].plants) == (2, 0)
+    bare = api_match()
+    bare["kills"], bare["rounds"] = [], []
+    m = from_trimmed(trim(bare))
+    assert m.players[0].first_bloods is None and m.players[0].plants is None  # unknown, not zero
